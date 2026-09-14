@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#101935" />
+    <title>오늘의 팀전 | 스코어보드</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#dashboard"><span class="brand-mark">T</span><span>오늘의 팀전</span></a>
+      <nav aria-label="주요 메뉴">
+        <a class="active" href="#dashboard">대시보드</a>
+        <a href="#ladder">팀 배정</a>
+        <a href="#result">결과 기록</a>
+        <a href="#history">경기 기록</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" id="dashboard">
+        <div>
+          <p class="eyebrow">PRIVATE GAME DASHBOARD</p>
+          <h1>항상<br /><em>고맙습니다.</em></h1>
+          <p class="hero-copy">랜덤 팀 배정부터 승부 기록까지. 우리 여섯의 팀전을 한곳에 남겨보세요.</p>
+        </div>
+        <div class="hero-date"><span id="todayLabel"></span><strong id="todayGames">0</strong><small>오늘 기록한 경기</small></div>
+      </section>
+
+      <section class="stats-grid" aria-label="전체 요약">
+        <article class="stat-card"><span>전체 경기</span><strong id="totalGames">0</strong><small>기록된 모든 경기</small></article>
+        <article class="stat-card champion"><span>최다 승리</span><strong id="topWinner">-</strong><small id="topWinnerDetail">누적 1위</small><span class="crown-art" aria-hidden="true">♛</span></article>
+        <article class="stat-card liquidity"><span>유동성 공급자</span><strong id="liquidityProvider">-</strong><small id="liquidityProviderDetail">누적 4위</small><span class="ox-art" aria-hidden="true"><i>🐃</i><em class="tear t1">●</em><em class="tear t2">●</em><em class="tear t3">●</em></span></article>
+      </section>
+
+      <section class="section scoreboard-section">
+        <div class="section-heading"><div><p class="eyebrow">SEASON RANKING</p><h2>전체 누적 스코어보드</h2><p class="section-description">성구 · 남우 · 태원 · 민진의 누적 금액입니다.</p></div><span class="live-dot">LIVE</span></div>
+        <div class="scoreboard" id="scoreboard"></div>
+      </section>
+
+      <section class="split-section">
+        <article class="section trend-card expanded-guide">
+          <div class="section-heading"><div><p class="eyebrow">QUICK GUIDE</p><h2>이렇게 시작하세요</h2></div></div>
+          <ol class="guide-list"><li><span>01</span><p><strong>팀 배정</strong><br />사다리에서 이번 판 팀을 정해요.</p></li><li><span>02</span><p><strong>경기 진행</strong><br />민경과 혜빈은 항상 서로 다른 팀이에요.</p></li><li><span>03</span><p><strong>결과 저장</strong><br />점수와 승리 팀을 기록하면 통계가 갱신돼요.</p></li></ol>
+        </article>
+      </section>
+
+      <section class="section ladder-section" id="ladder">
+        <div class="section-heading"><div><p class="eyebrow">TEAM LADDER</p><h2>이번 판 팀 배정</h2><p class="section-description">민경 · 혜빈은 서로 반대 팀, 나머지 네 명은 2명씩 무작위로 배정됩니다.</p></div><button class="primary-button" id="drawTeams" type="button">사다리 타기 <span>→</span></button></div>
+        <div class="ladder-layout">
+          <div class="ladder-board" aria-label="팀 배정 사다리"><canvas id="ladderCanvas" width="760" height="330"></canvas><div class="ladder-players" id="ladderPlayers"></div><div class="ladder-targets"><span class="team-one">1 TEAM</span><span class="team-two">2 TEAM</span></div></div>
+          <aside class="assignment-panel"><p class="assignment-label">CURRENT MATCH</p><div id="assignmentEmpty" class="assignment-empty">버튼을 눌러<br />팀을 정해보세요.</div><div id="assignmentResult" hidden></div></aside>
+        </div>
+      </section>
+
+      <section class="section result-section" id="result">
+        <div class="section-heading"><div><p class="eyebrow">LOG A RESULT</p><h2>개인 결과 기록</h2><p class="section-description">네 명의 수익·손실 금액을 직접 입력해 누적하세요.</p></div></div>
+        <form id="resultForm" class="result-form">
+          <label>경기 날짜<input id="matchDate" type="date" required /></label>
+          <label>성구<input id="amountSeonggu" type="number" step="1000" placeholder="예: 3000" required /></label>
+          <label>남우<input id="amountNamu" type="number" step="1000" placeholder="예: -3000" required /></label>
+          <label>태원<input id="amountTaewon" type="number" step="1000" placeholder="예: 0" required /></label>
+          <label>민진<input id="amountMinjin" type="number" step="1000" placeholder="예: 6000" required /></label>
+          <button class="primary-button" type="submit">결과 저장 <span>✓</span></button>
+        </form>
+        <p class="form-note" id="formNote">금액은 원 단위로 입력하세요. 수익은 양수, 잃은 금액은 음수로 적습니다.</p>
+      </section>
+
+      <section class="section history-section" id="history">
+        <div class="section-heading"><div><p class="eyebrow">MATCH ARCHIVE</p><h2>경기 기록</h2></div><span id="historyCount" class="history-count">0 GAMES</span></div>
+        <div class="history-table-wrap"><table><thead><tr><th>날짜 / 회차</th><th>개인별 증감</th><th></th></tr></thead><tbody id="historyBody"></tbody></table></div>
+        <div class="empty-history" id="emptyHistory">아직 기록된 경기가 없어요. 첫 경기 결과를 남겨보세요!</div>
+      </section>
+    </main>
+    <footer><button class="reset-button" id="resetData" type="button">데이터 초기화</button><span>오늘의 팀전 · 기록은 이 브라우저에 안전하게 저장됩니다.</span></footer>
+    <div class="toast" id="toast" role="status"></div>
+    <div class="modal-backdrop" id="resetModal" hidden>
+      <section class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="resetModalTitle">
+        <p class="eyebrow">RESET DATA</p><h2 id="resetModalTitle">정말로 초기화 하시겠습니까?</h2>
+        <p>직접 추가한 경기 기록만 삭제되며, 1~8회차 기본 기록은 유지됩니다.</p>
+        <div class="modal-actions"><button class="modal-cancel" id="cancelReset" type="button">아니오</button><button class="modal-confirm" id="confirmReset" type="button">예</button></div>
+      </section>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>
