@@ -43,3 +43,4 @@ footer>span{text-align:center}
 .rank-row.money-rank .score-points{display:grid;grid-template-columns:auto 1fr;align-items:center;column-gap:5px;text-align:left;white-space:nowrap}
 .rank-row.money-rank .score-points b{font:inherit;font-weight:400}
 .rank-row.money-rank .score-points em{font:inherit;font-style:normal;text-align:right}
+@media(max-width:760px){.rank-row.money-rank{grid-template-columns:32px minmax(0,1fr) 108px}}
