@@ -35,3 +35,7 @@ form.result-form{grid-template-columns:1.15fr repeat(4,1fr) auto}.rank-row.money
 footer{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:12px}
 footer>span{text-align:center}
 @media(max-width:760px){footer{grid-template-columns:auto minmax(0,1fr);padding:20px 16px;font-size:11px;line-height:1.5}footer>span{text-align:left}}
+
+.ladder-targets{left:0;right:0;gap:4px;padding:0 8px}
+.ladder-targets span{flex:1;text-align:center;padding:7px 2px;font-size:10px}
+@media(max-width:760px){.ladder-targets{gap:2px;padding:0 5px}.ladder-targets span{font-size:8px;padding:6px 1px}}
