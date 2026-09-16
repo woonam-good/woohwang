@@ -44,3 +44,6 @@ footer>span{text-align:center}
 .rank-row.money-rank .score-points b{font:inherit;font-weight:400}
 .rank-row.money-rank .score-points em{font:inherit;font-style:normal;text-align:right}
 @media(max-width:760px){.rank-row.money-rank{grid-template-columns:32px minmax(0,1fr) 108px}}
+.rank-row.money-rank .score-points{font-family:'Pretendard',Arial,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:-.2px}
+.rank-row.money-rank .score-points b{font-weight:600}
+.rank-row.money-rank .score-points em{font-weight:700}
