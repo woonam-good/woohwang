@@ -73,12 +73,12 @@
         <div class="empty-history" id="emptyHistory">아직 기록된 경기가 없어요. 첫 경기 결과를 남겨보세요!</div>
       </section>
     </main>
-    <footer><button class="reset-button" id="resetData" type="button">데이터 초기화</button><span>오늘의 팀전 · 기록은 이 브라우저에 안전하게 저장됩니다.</span></footer>
+    <footer><button class="reset-button" id="resetData" type="button">데이터 초기화</button><span>오늘의 팀전 · 기록은 서버에서 공유되고 이 브라우저에도 백업됩니다.</span></footer>
     <div class="toast" id="toast" role="status"></div>
     <div class="modal-backdrop" id="resetModal" hidden>
       <section class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="resetModalTitle">
         <p class="eyebrow">RESET DATA</p><h2 id="resetModalTitle">정말로 초기화 하시겠습니까?</h2>
-        <p>직접 추가한 경기 기록만 삭제되며, 1~8회차 기본 기록은 유지됩니다.</p>
+        <p>모든 사용자가 추가한 경기 기록이 삭제되며, 1~8회차 기본 기록은 유지됩니다.</p>
         <div class="modal-actions"><button class="modal-cancel" id="cancelReset" type="button">아니오</button><button class="modal-confirm" id="confirmReset" type="button">예</button></div>
       </section>
     </div>

@@ -11,11 +11,29 @@ const historicalRounds = [
   { label:'7회차', changes:{성구:-3000, 남우:-3000, 태원:3000, 민진:3000} },
   { label:'8회차', changes:{성구:6000, 남우:-6000, 태원:0, 민진:0} }
 ];
-let state = JSON.parse(localStorage.getItem(storageKey) || '{"matches":[],"nextHyeBinTeam":1}');
+const supabaseUrl = 'https://rqjktefgudohqkfnfkqx.supabase.co';
+const supabaseKey = 'sb_publishable_VCByoPczOrmS7EejQNsa4Q_0906hKjL';
+const migrationKey = `${storageKey}-supabase-migrated-v1`;
+const db = window.supabase?.createClient(supabaseUrl, supabaseKey);
+function normalise(value){return {matches:Array.isArray(value?.matches)?value.matches:[],nextHyeBinTeam:value?.nextHyeBinTeam===2?2:1};}
+let localSnapshot;
+try { localSnapshot=normalise(JSON.parse(localStorage.getItem(storageKey)||'{}')); }
+catch { localSnapshot=normalise({}); }
+let state = localSnapshot;
+let ready = false;
+let working = false;
+let pending = Promise.resolve();
 let currentAssignment = null;
 const $ = (id) => document.getElementById(id);
 const today = new Date().toISOString().slice(0, 10);
-function save(){localStorage.setItem(storageKey,JSON.stringify(state));}
+function backup(){try{localStorage.setItem(storageKey,JSON.stringify(state));}catch(error){console.warn('Local backup failed',error);}}
+function setBusy(value){working=value;for(const id of ['drawTeams','confirmReset','resetData'])$(id).disabled=value||!ready;$('resultForm').querySelector('button[type="submit"]').disabled=value||!ready;document.querySelectorAll('.remove-match').forEach(button=>button.disabled=value||!ready);}
+function applyState(value){state=normalise(value);backup();renderAll();renderLadder();setBusy(working);}
+async function readServer(){const {data,error}=await db.from('scoreboard_state').select('game_state').eq('id',1).single();if(error)throw error;return data.game_state||{};}
+// Compare the complete JSON value so two browsers cannot silently overwrite each other.
+async function changeServer(change){for(let attempt=0;attempt<8;attempt++){const raw=await readServer();const base=normalise(raw);const next=change(base,raw);if(!next)return base;const {data,error}=await db.from('scoreboard_state').update({game_state:next}).eq('id',1).eq('game_state',JSON.stringify(raw)).select('game_state');if(error)throw error;if(data?.length)return normalise(data[0].game_state);}throw new Error('동시에 변경된 기록이 많아 저장하지 못했습니다. 다시 시도해 주세요.');}
+function enqueue(change,success){pending=pending.catch(()=>{}).then(async()=>{setBusy(true);try{const saved=await changeServer(change);applyState(saved);if(success)showToast(success);return true;}catch(error){console.error('Scoreboard save failed',error);showToast('서버 저장에 실패했습니다. 다시 시도해 주세요.');return false;}finally{setBusy(false);}});return pending;}
+async function refresh(){if(!ready||working)return;try{applyState(await readServer());}catch(error){console.error('Realtime refresh failed',error);showToast('동기화에 실패했습니다. 새로고침해 주세요.');}}
 function formatDate(value){return new Intl.DateTimeFormat('ko-KR',{month:'long',day:'numeric',weekday:'short'}).format(new Date(`${value}T00:00:00`));}
 function formatHistoryDate(value){return new Intl.DateTimeFormat('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'}).format(new Date(`${value}T00:00:00`));}
 function formatWon(value){return `${value<0?'−':''}${Math.abs(value).toLocaleString()}원`;}
@@ -27,14 +45,16 @@ function renderDashboard(){const stats=getPlayerStats(),ordered=scoreboardPlayer
 function drawLadder(){const canvas=$('ladderCanvas'),ctx=canvas.getContext('2d'),h=canvas.height;ctx.clearRect(0,0,canvas.width,h);const xs=[70,194,318,442,566,690];ctx.strokeStyle='#c9d2e6';ctx.lineWidth=2;ctx.setLineDash([4,5]);xs.forEach(x=>{ctx.beginPath();ctx.moveTo(x,43);ctx.lineTo(x,h-45);ctx.stroke();});ctx.setLineDash([]);if(currentAssignment){ctx.strokeStyle='#7d95de';ctx.lineWidth=3;for(let y=78;y<h-75;y+=42)for(let i=0;i<5;i++)if(Math.random()>.56){ctx.beginPath();ctx.moveTo(xs[i],y+(i%2)*7);ctx.lineTo(xs[i+1],y+(i%2)*7);ctx.stroke();}}}
 function renderLadder(){$('ladderPlayers').innerHTML=ladderPlayers.map(p=>`<span>${p}</span>`).join('');drawLadder();if(!currentAssignment)return;$('assignmentEmpty').hidden=true;const result=$('assignmentResult');result.hidden=false;result.innerHTML=teamCard(1,currentAssignment.team1)+teamCard(2,currentAssignment.team2);}
 function teamCard(team,members){return `<div class="team-result ${team===2?'team2':''}"><h3><b>${team} TEAM</b> · ${team===1?'BLUE SIDE':'RED SIDE'}</h3><div class="member-chips">${members.map(p=>`<span>${p}</span>`).join('')}</div></div>`;}
-function assignTeams(){const random=shuffle(['민진','성구','남우','태원']),hyeTeam=state.nextHyeBinTeam;currentAssignment=hyeTeam===1?{team1:['혜빈',...random.slice(0,2)],team2:['민경',...random.slice(2)]}:{team1:['민경',...random.slice(0,2)],team2:['혜빈',...random.slice(2)]};state.nextHyeBinTeam=hyeTeam===1?2:1;save();renderLadder();showToast('이번 판 팀이 정해졌어요!');}
+function assignTeams(){if(!ready||working)return;const random=shuffle(['민진','성구','남우','태원']);enqueue(base=>{const hyeTeam=base.nextHyeBinTeam;currentAssignment=hyeTeam===1?{team1:['혜빈',...random.slice(0,2)],team2:['민경',...random.slice(2)]}:{team1:['민경',...random.slice(0,2)],team2:['혜빈',...random.slice(2)]};return {...base,nextHyeBinTeam:hyeTeam===1?2:1};},'이번 판 팀이 정해졌어요!').then(ok=>{if(ok)renderLadder();else{currentAssignment=null;renderLadder();}});}
 function renderHistory(){const body=$('historyBody'),items=[...historicalRounds.map((entry,index)=>({...entry,id:`seed-${index}`,date:null,seed:true})),...state.matches].reverse();body.innerHTML=items.map(entry=>`<tr><td>${entry.date?formatHistoryDate(entry.date):`${entry.label} · 날짜 미상`}</td><td class="result-summary">${scoreboardPlayers.map(p=>`<b>${p}</b> ${formatChange(entry.changes[p])}`).join(' · ')}</td><td>${entry.seed?'':`<button class="remove-match" aria-label="기록 삭제" data-id="${entry.id}">×</button>`}</td></tr>`).join('');$('emptyHistory').hidden=true;}
 function showToast(message){const t=$('toast');t.textContent=message;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2300);}
 $('drawTeams').addEventListener('click',assignTeams);
-$('resultForm').addEventListener('submit',event=>{event.preventDefault();const changes={성구:Number($('amountSeonggu').value),남우:Number($('amountNamu').value),태원:Number($('amountTaewon').value),민진:Number($('amountMinjin').value)};state.matches.push({id:Date.now(),date:$('matchDate').value,changes});save();$('resultForm').reset();$('matchDate').value=today;renderAll();showToast('개인 금액 기록이 저장됐어요.');});
-$('historyBody').addEventListener('click',event=>{const button=event.target.closest('[data-id]');if(!button)return;if(!confirm('정말로 삭제하시겠습니까?'))return;state.matches=state.matches.filter(m=>m.id!==Number(button.dataset.id));save();renderAll();showToast('기록을 삭제했어요.');});
+$('resultForm').addEventListener('submit',async event=>{event.preventDefault();if(!ready||working)return;const changes={성구:Number($('amountSeonggu').value),남우:Number($('amountNamu').value),태원:Number($('amountTaewon').value),민진:Number($('amountMinjin').value)};const match={id:crypto.randomUUID(),date:$('matchDate').value,changes};if(await enqueue(base=>({...base,matches:[...base.matches,match]}),'개인 금액 기록이 저장됐어요.')){$('resultForm').reset();$('matchDate').value=today;}});
+$('historyBody').addEventListener('click',event=>{const button=event.target.closest('[data-id]');if(!button||!ready||working)return;if(!confirm('정말로 삭제하시겠습니까?'))return;const id=button.dataset.id;enqueue(base=>({...base,matches:base.matches.filter(m=>String(m.id)!==id)}),'기록을 삭제했어요.');});
 $('resetData').addEventListener('click',()=>{$('resetModal').hidden=false;});
 $('cancelReset').addEventListener('click',()=>{$('resetModal').hidden=true;});
-$('confirmReset').addEventListener('click',()=>{state={matches:[],nextHyeBinTeam:1};currentAssignment=null;save();renderAll();renderLadder();$('resetModal').hidden=true;showToast('추가 기록을 초기화했어요.');});
+$('confirmReset').addEventListener('click',async()=>{if(!ready||working)return;if(await enqueue(()=>({matches:[],nextHyeBinTeam:1}),'추가 기록을 초기화했어요.')){currentAssignment=null;renderLadder();$('resetModal').hidden=true;}});
 function renderAll(){renderDashboard();renderHistory();}
-$('todayLabel').textContent=formatDate(today);$('matchDate').value=today;renderAll();renderLadder();window.addEventListener('resize',drawLadder);
+$('todayLabel').textContent=formatDate(today);$('matchDate').value=today;renderAll();renderLadder();setBusy(false);window.addEventListener('resize',drawLadder);
+async function initialise(){if(!db){showToast('동기화 라이브러리를 불러오지 못했습니다. 새로고침해 주세요.');return;}try{let server=await readServer();if(!localStorage.getItem(migrationKey)&&(localSnapshot.matches.length||localSnapshot.nextHyeBinTeam===2)){server=await changeServer((base,raw)=>{const ids=new Set(base.matches.map(m=>String(m.id)));const missing=localSnapshot.matches.filter(m=>!ids.has(String(m.id)));const empty=Object.keys(raw).length===0;return missing.length||empty&&localSnapshot.nextHyeBinTeam===2?{...base,matches:[...base.matches,...missing],nextHyeBinTeam:empty?localSnapshot.nextHyeBinTeam:base.nextHyeBinTeam}:null;});}applyState(server);localStorage.setItem(migrationKey,'1');ready=true;setBusy(false);db.channel('scoreboard-state-1').on('postgres_changes',{event:'UPDATE',schema:'public',table:'scoreboard_state',filter:'id=eq.1'},()=>{pending=pending.then(refresh);}).subscribe(status=>{if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')showToast('실시간 연결이 끊겼습니다. 새로고침해 주세요.');});}catch(error){console.error('Scoreboard initialisation failed',error);showToast('서버 연결에 실패했습니다. 기록은 이 브라우저에 보관되어 있습니다.');}}
+initialise();
