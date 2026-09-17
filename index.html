@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#101935" />
     <title>오늘의 팀전 | 스코어보드</title>
-    <link rel="stylesheet" href="styles.css?v=three-by-three-result-20260917" />
+    <link rel="stylesheet" href="styles.css?v=three-by-three-rotation-random-20260917" />
   </head>
   <body>
     <header class="topbar">
@@ -55,7 +55,7 @@
       </section>
 
       <section class="section shared-ladder-section" id="sharedLadder">
-        <div class="section-heading"><div><p class="eyebrow">REALTIME 3 VS 3 LADDER</p><h2>3:3 전용 사다리</h2><p class="section-description">버튼을 누르면 같은 팀 배정 결과가 모든 화면에 실시간으로 표시됩니다.</p></div><button class="primary-button" id="drawSharedTeams" type="button">3:3 팀 배정 <span>↗</span></button></div>
+        <div class="section-heading"><div><p class="eyebrow">REALTIME 3 VS 3 LADDER</p><h2>3:3 전용 사다리</h2><p class="section-description">혜빈·민경은 매 판 서로 반대 팀으로 교대하고, 나머지 4명은 무작위로 섞입니다.</p></div><button class="primary-button" id="drawSharedTeams" type="button">3:3 팀 배정 <span>↗</span></button></div>
         <p class="shared-live-status" id="sharedLiveStatus">아직 공유된 3:3 팀 배정이 없습니다.</p>
         <div class="ladder-layout shared-ladder-layout">
           <div class="ladder-board" aria-label="실시간 3:3 팀 배정 사다리"><canvas id="sharedLadderCanvas" width="760" height="330"></canvas><div class="ladder-players" id="sharedLadderPlayers"></div><div class="ladder-targets" id="sharedLadderTargets" aria-label="도착 팀"></div></div>
@@ -94,7 +94,7 @@
       </section>
     </div>
    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js?v=three-by-three-result-20260917"></script>
+<script src="app.js?v=three-by-three-rotation-random-20260917"></script>
   </body>
 </html>
 
