@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#101935" />
     <title>오늘의 팀전 | 스코어보드</title>
-    <link rel="stylesheet" href="styles.css?v=shared-ladder-20260917" />
+    <link rel="stylesheet" href="styles.css?v=shared-winrate-20260917" />
   </head>
   <body>
     <header class="topbar">
@@ -61,6 +61,7 @@
           <div class="ladder-board" aria-label="실시간 공유 팀 배정 사다리"><canvas id="sharedLadderCanvas" width="760" height="330"></canvas><div class="ladder-players" id="sharedLadderPlayers"></div><div class="ladder-targets" id="sharedLadderTargets" aria-label="공유 도착 팀"></div></div>
           <aside class="assignment-panel shared-assignment-panel"><p class="assignment-label">SHARED MATCH</p><div id="sharedAssignmentEmpty" class="assignment-empty">공유 버튼을 눌러<br />모두의 팀을 정해보세요.</div><div id="sharedAssignmentResult" hidden></div><div id="sharedOutcomeForm" class="shared-outcome-form" hidden><p>경기 후 승리 팀을 선택하세요.</p><div><button type="button" data-winner="1">1 TEAM 승리</button><button type="button" data-winner="2">2 TEAM 승리</button></div></div></aside>
         </div>
+        <div class="shared-winrates" aria-label="공유 경기 개인 승률"><div class="section-heading"><div><p class="eyebrow">PLAYER WIN RATE</p><h3>개인별 승률</h3></div></div><div id="sharedWinRates" class="shared-winrate-grid"></div></div>
         <div class="shared-history" aria-label="공유 팀 배정 기록"><div class="section-heading"><div><p class="eyebrow">SHARED MATCH ARCHIVE</p><h3>공유 경기 기록</h3></div><span id="sharedHistoryCount" class="history-count">0 ROUNDS</span></div><div id="sharedHistoryBody" class="shared-history-body"></div><div id="sharedHistoryEmpty" class="empty-history">아직 공유된 팀 배정 기록이 없어요.</div></div>
       </section>
 
@@ -93,6 +94,6 @@
       </section>
     </div>
    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js?v=shared-ladder-20260917"></script>
+<script src="app.js?v=shared-winrate-20260917"></script>
   </body>
 </html>

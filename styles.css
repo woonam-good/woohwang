@@ -74,4 +74,12 @@ footer>span{text-align:center}
 .shared-round-teams .team-one{color:#1b4ae0;background:#e8edff}
 .shared-round-teams .team-two{color:#d23458;background:#ffe8ee}
 .shared-round-winner{font-weight:700;color:#299971}
+.shared-winrates{margin-top:26px;border-top:1px solid var(--line);padding-top:25px}
+.shared-winrates h3{font:800 20px 'Nanum Myeongjo',serif;margin:0}
+.shared-winrate-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:17px}
+.shared-winrate-card{border:1px solid var(--line);border-radius:8px;padding:12px 8px;text-align:center;display:grid;gap:4px;background:#fafbfe}
+.shared-winrate-card strong{font-size:12px}
+.shared-winrate-card b{font:700 18px 'Pretendard',Arial,sans-serif;color:var(--blue)}
+.shared-winrate-card small{font-size:10px;color:var(--muted);white-space:nowrap}
 @media(max-width:760px){.rank-row.money-rank{grid-template-columns:32px minmax(0,1fr) 108px 60px}.rank-row.money-rank .win-rate-text{font-size:10px}.shared-round-teams{grid-template-columns:1fr}.shared-history{margin-top:22px;padding-top:21px}}
+@media(max-width:760px){.shared-winrates{margin-top:22px;padding-top:21px}.shared-winrate-grid{grid-template-columns:repeat(3,1fr);gap:7px}.shared-winrate-card{padding:10px 4px}.shared-winrate-card small{font-size:9px}}
