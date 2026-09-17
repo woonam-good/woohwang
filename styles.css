@@ -49,3 +49,29 @@ footer>span{text-align:center}
 .rank-row.money-rank .score-points em{font-weight:700}
 #resultForm .primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:'Pretendard',Arial,sans-serif;font-weight:600;line-height:1}
 #resultForm .primary-button span{margin-left:0;font-family:inherit;font-size:16px;line-height:1}
+
+.rank-row.money-rank{grid-template-columns:46px minmax(0,1fr) 130px 64px}
+.rank-row.money-rank .score-points{grid-column:3}
+.rank-row.money-rank .win-rate-text{grid-column:4;color:var(--muted);font-size:11px;font-weight:600;text-align:right;white-space:nowrap}
+.shared-ladder-section{margin-top:18px}
+.shared-live-status{margin:18px 0 0;color:var(--muted);font-size:12px}
+.shared-assignment-panel{background:linear-gradient(145deg,#172447,#101935)}
+.shared-outcome-form{margin-top:22px;border-top:1px solid #314064;padding-top:17px}
+.shared-outcome-form p{margin:0 0 10px;color:#aebad3;font-size:12px;line-height:1.5}
+.shared-outcome-form>div{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.shared-outcome-form button{border:0;border-radius:7px;padding:9px 6px;color:#fff;font:600 11px 'Pretendard',Arial,sans-serif;cursor:pointer}
+.shared-outcome-form button[data-winner="1"]{background:#2857ee}
+.shared-outcome-form button[data-winner="2"]{background:#d23458}
+.shared-history{margin-top:26px;border-top:1px solid var(--line);padding-top:25px}
+.shared-history h3{font:800 20px 'Nanum Myeongjo',serif;margin:0}
+.shared-history-body{margin-top:17px}
+.shared-round-record{border-top:1px solid var(--line);padding:14px 0;display:grid;gap:8px;font-size:12px}
+.shared-round-record:first-child{border-top:0}
+.shared-round-meta{display:flex;justify-content:space-between;gap:12px;color:var(--muted)}
+.shared-round-meta strong{color:var(--ink)}
+.shared-round-teams{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.shared-round-teams span{padding:8px;border-radius:6px;line-height:1.5}
+.shared-round-teams .team-one{color:#1b4ae0;background:#e8edff}
+.shared-round-teams .team-two{color:#d23458;background:#ffe8ee}
+.shared-round-winner{font-weight:700;color:#299971}
+@media(max-width:760px){.rank-row.money-rank{grid-template-columns:32px minmax(0,1fr) 108px 60px}.rank-row.money-rank .win-rate-text{font-size:10px}.shared-round-teams{grid-template-columns:1fr}.shared-history{margin-top:22px;padding-top:21px}}
