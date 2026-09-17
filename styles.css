@@ -62,6 +62,7 @@ footer>span{text-align:center}
 .shared-outcome-form button{border:0;border-radius:7px;padding:9px 6px;color:#fff;font:600 11px 'Pretendard',Arial,sans-serif;cursor:pointer}
 .shared-outcome-form button[data-winner="1"]{background:#2857ee}
 .shared-outcome-form button[data-winner="2"]{background:#d23458}
+.shared-winner-options button{opacity:.55;outline:2px solid transparent;outline-offset:2px}.shared-winner-options button.selected{opacity:1;outline-color:#fff;box-shadow:0 0 0 3px rgba(127,160,255,.42)}.shared-outcome-selection{min-height:18px!important;margin:12px 0 10px!important;color:#d8dfed!important}.shared-save-button{width:100%;background:#f2c22c!important;color:#1c2130!important;font-weight:700!important}.shared-save-button:disabled{opacity:.45;cursor:not-allowed}
 .shared-history{margin-top:26px;border-top:1px solid var(--line);padding-top:25px}
 .shared-history h3{font:800 20px 'Nanum Myeongjo',serif;margin:0}
 .shared-history-body{margin-top:17px}
@@ -83,3 +84,4 @@ footer>span{text-align:center}
 .shared-winrate-card small{font-size:10px;color:var(--muted);white-space:nowrap}
 @media(max-width:760px){.rank-row.money-rank{grid-template-columns:32px minmax(0,1fr) 108px 60px}.rank-row.money-rank .win-rate-text{font-size:10px}.shared-round-teams{grid-template-columns:1fr}.shared-history{margin-top:22px;padding-top:21px}}
 @media(max-width:760px){.shared-winrates{margin-top:22px;padding-top:21px}.shared-winrate-grid{grid-template-columns:repeat(3,1fr);gap:7px}.shared-winrate-card{padding:10px 4px}.shared-winrate-card small{font-size:9px}}
+
