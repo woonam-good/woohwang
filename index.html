@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="ko">
   <head>
@@ -5,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#101935" />
     <title>오늘의 팀전 | 스코어보드</title>
-    <link rel="stylesheet" href="styles.css?v=three-by-three-history-20260918" />
+    <link rel="stylesheet" href="styles.css?v=scoreboard-simplify-20260918" />
   </head>
   <body>
     <header class="topbar">
@@ -25,7 +26,6 @@
           <h1>항상<br /><em>고맙습니다.</em></h1>
           <p class="hero-copy">랜덤 팀 배정부터 승부 기록까지. 우리 여섯의 팀전을 한곳에 남겨보세요.</p>
         </div>
-        <div class="hero-date"><span id="todayLabel"></span><strong id="todayGames">0</strong><small>오늘 기록한 경기</small></div>
       </section>
 
       <section class="stats-grid" aria-label="전체 요약">
@@ -35,7 +35,7 @@
       </section>
 
       <section class="section scoreboard-section">
-        <div class="section-heading"><div><p class="eyebrow">SEASON RANKING</p><h2>전체 누적 스코어보드</h2><p class="section-description">성구 · 남우 · 태원 · 민진의 누적 금액과 공유 경기 승률입니다.</p></div><span class="live-dot">LIVE</span></div>
+        <div class="section-heading"><div><p class="eyebrow">SEASON RANKING</p><h2>전체 누적 스코어보드</h2><p class="section-description">성구 · 남우 · 태원 · 민진의 누적 금액입니다.</p></div><span class="live-dot">LIVE</span></div>
         <div class="scoreboard" id="scoreboard"></div>
       </section>
 
@@ -86,7 +86,7 @@
       </section>
     </div>
    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js?v=three-by-three-history-20260918"></script>
+<script src="app.js?v=scoreboard-simplify-20260918"></script>
   </body>
 </html>
 
