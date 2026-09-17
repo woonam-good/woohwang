@@ -80,7 +80,7 @@ footer>span{text-align:center}
 .shared-winrate-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:17px}
 .shared-winrate-card{border:1px solid var(--line);border-radius:8px;padding:12px 8px;text-align:center;display:grid;gap:4px;background:#fafbfe}
 .shared-winrate-card strong{font-size:12px}
-.shared-winrate-card b{font:700 18px 'Pretendard',Arial,sans-serif;color:var(--blue)}
+.shared-winrate-card b{font:700 18px 'Pretendard',Arial,sans-serif;color:var(--ink)}
 .shared-winrate-card small{font-size:10px;color:var(--muted);white-space:nowrap}
 @media(max-width:760px){.rank-row.money-rank{grid-template-columns:32px minmax(0,1fr) 108px}.shared-round-teams{grid-template-columns:1fr}.shared-history{margin-top:22px;padding-top:21px}}
 @media(max-width:760px){.shared-winrates{margin-top:22px;padding-top:21px}.shared-winrate-grid{grid-template-columns:repeat(3,1fr);gap:7px}.shared-winrate-card{padding:10px 4px}.shared-winrate-card small{font-size:9px}}
@@ -94,7 +94,10 @@ footer>span{text-align:center}
 .shared-combination-list{margin-top:15px;display:grid;gap:7px;max-height:345px;overflow:auto;padding-right:2px}
 .shared-combination-row{display:flex;align-items:center;justify-content:space-between;gap:8px;border-radius:7px;background:#fff;padding:9px 10px;font-size:11px;line-height:1.4}
 .shared-combination-row span{min-width:0;color:var(--ink)}
-.shared-combination-row b{flex:0 0 auto;color:var(--blue);font:700 12px 'DM Mono',monospace}
+.shared-combination-row b{flex:0 0 auto;display:flex;gap:4px;font:700 12px 'DM Mono',monospace;font-style:normal}.shared-combination-row b i{font-style:normal}.combination-count{color:var(--blue)}.combination-wins{color:#26956a}.combination-losses{color:#d23458}.shared-winrate-card b.above-even{color:#b88100}.shared-winrate-card b.even{color:var(--ink)}.shared-winrate-card b.below-even{color:#d23458}
+
+.recent-earner-card{width:215px;min-height:154px;padding:21px;border:1px solid #e6d8a4;border-radius:16px;background:linear-gradient(145deg,#fffdf1,#fff7cf);box-shadow:var(--shadow);align-self:center}.recent-earner-card>span{display:block;color:#866d18;font:700 11px 'DM Mono',monospace;letter-spacing:.4px}.recent-earner-card strong{display:block;margin-top:12px;font:800 28px 'Nanum Myeongjo',serif;color:#745606;letter-spacing:-1px}.recent-earner-card small{display:block;margin-top:8px;color:#917c34;font-size:11px}
+@media(max-width:760px){.hero{grid-template-columns:minmax(0,1fr) 126px}.recent-earner-card{width:126px;min-height:112px;padding:14px 12px}.recent-earner-card>span{font-size:9px;letter-spacing:0}.recent-earner-card strong{margin-top:8px;font-size:20px;white-space:nowrap}.recent-earner-card small{margin-top:6px;font-size:9px;white-space:nowrap}}
 .shared-combination-empty{margin:15px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
 .shared-history-caption{margin:0 0 8px;color:var(--muted);font:10px 'DM Mono',monospace;letter-spacing:.6px}
 .shared-history-older{margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
