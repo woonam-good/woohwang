@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#101935" />
     <title>오늘의 팀전 | 스코어보드</title>
-    <link rel="stylesheet" href="styles.css?v=three-by-three-cancel-rotation-20260917" />
+    <link rel="stylesheet" href="styles.css?v=three-by-three-history-20260918" />
   </head>
   <body>
     <header class="topbar">
       <a class="brand" href="#dashboard"><span class="brand-mark">T</span><span>오늘의 팀전</span></a>
       <nav aria-label="주요 메뉴">
         <a class="active" href="#dashboard">대시보드</a>
-        <a href="#ladder">팀 배정</a>
+        <a href="#sharedLadder">3:3 팀 배정</a>
         <a href="#result">결과 기록</a>
         <a href="#history">경기 기록</a>
       </nav>
@@ -46,23 +46,15 @@
         </article>
       </section>
 
-      <section class="section ladder-section" id="ladder">
-        <div class="section-heading"><div><p class="eyebrow">TEAM LADDER</p><h2>이번 판 팀 배정</h2><p class="section-description">민경 · 혜빈은 서로 반대 팀, 나머지 네 명은 2명씩 무작위로 배정됩니다.</p></div><button class="primary-button" id="drawTeams" type="button">사다리 타기 <span>→</span></button></div>
-        <div class="ladder-layout">
-          <div class="ladder-board" aria-label="팀 배정 사다리"><canvas id="ladderCanvas" width="760" height="330"></canvas><div class="ladder-players" id="ladderPlayers"></div><div class="ladder-targets" id="ladderTargets" aria-label="도착 팀"></div></div>
-          <aside class="assignment-panel"><p class="assignment-label">CURRENT MATCH</p><div id="assignmentEmpty" class="assignment-empty">버튼을 눌러<br />팀을 정해보세요.</div><div id="assignmentResult" hidden></div></aside>
-        </div>
-      </section>
-
       <section class="section shared-ladder-section" id="sharedLadder">
-        <div class="section-heading"><div><p class="eyebrow">REALTIME 3 VS 3 LADDER</p><h2>3:3 전용 사다리</h2><p class="section-description">혜빈·민경은 매 판 서로 반대 팀으로 교대하고, 나머지 4명은 무작위로 섞입니다.</p></div><button class="primary-button" id="drawSharedTeams" type="button">3:3 팀 배정 <span>↗</span></button></div>
+        <div class="section-heading"><div><p class="eyebrow">REALTIME 3 VS 3 LADDER</p><h2>3:3 전용 사다리</h2><p class="section-description">혜빈·민경은 매 판 서로 반대 팀으로 교대하고, 나머지 4명은 무작위로 섞입니다.</p></div></div>
         <p class="shared-live-status" id="sharedLiveStatus">아직 공유된 3:3 팀 배정이 없습니다.</p>
         <div class="ladder-layout shared-ladder-layout">
           <div class="ladder-board" aria-label="실시간 3:3 팀 배정 사다리"><canvas id="sharedLadderCanvas" width="760" height="330"></canvas><div class="ladder-players" id="sharedLadderPlayers"></div><div class="ladder-targets" id="sharedLadderTargets" aria-label="도착 팀"></div></div>
-          <aside class="assignment-panel shared-assignment-panel"><p class="assignment-label">3 VS 3 MATCH</p><div id="sharedAssignmentEmpty" class="assignment-empty">3:3 팀 배정 버튼을 눌러<br />모두의 팀을 정해보세요.</div><div id="sharedAssignmentResult" hidden></div><div id="sharedOutcomeForm" class="shared-outcome-form" hidden><p>경기 후 이긴 팀을 선택한 다음 결과를 저장하세요.</p><div class="shared-winner-options"><button type="button" data-winner="1" aria-pressed="false">1 TEAM 승리</button><button type="button" data-winner="2" aria-pressed="false">2 TEAM 승리</button></div><p id="sharedOutcomeSelection" class="shared-outcome-selection">승리 팀을 선택해 주세요.</p><div class="shared-outcome-actions"><button type="button" id="saveSharedWinner" class="shared-save-button" disabled>결과 저장</button><button type="button" id="cancelSharedAssignment" class="shared-cancel-button">팀 배정 취소</button></div></div></aside>
+          <aside class="assignment-panel shared-assignment-panel"><p class="assignment-label">3 VS 3 MATCH</p><button class="primary-button shared-draw-button" id="drawSharedTeams" type="button">3:3 팀 배정 <span class="go-badge">GO</span></button><div id="sharedAssignmentEmpty" class="assignment-empty">3:3 팀 배정 버튼을 눌러<br />모두의 팀을 정해보세요.</div><div id="sharedAssignmentResult" hidden></div><div id="sharedOutcomeForm" class="shared-outcome-form" hidden><p>경기 후 이긴 팀을 선택한 다음 결과를 저장하세요.</p><div class="shared-winner-options"><button type="button" data-winner="1" aria-pressed="false">1 TEAM 승리</button><button type="button" data-winner="2" aria-pressed="false">2 TEAM 승리</button></div><p id="sharedOutcomeSelection" class="shared-outcome-selection">승리 팀을 선택해 주세요.</p><div class="shared-outcome-actions"><button type="button" id="saveSharedWinner" class="shared-save-button" disabled>결과 저장</button><button type="button" id="cancelSharedAssignment" class="shared-cancel-button">팀 배정 취소</button></div></div></aside>
         </div>
         <div class="shared-winrates" aria-label="공유 경기 개인 승률"><div class="section-heading"><div><p class="eyebrow">PLAYER WIN RATE</p><h3>개인별 승률</h3></div></div><div id="sharedWinRates" class="shared-winrate-grid"></div></div>
-        <div class="shared-history" aria-label="3대3 경기 기록"><div class="section-heading"><div><p class="eyebrow">3 VS 3 MATCH ARCHIVE</p><h3>3:3 경기 기록</h3></div><span id="sharedHistoryCount" class="history-count">0 ROUNDS</span></div><div id="sharedHistoryBody" class="shared-history-body"></div><div id="sharedHistoryEmpty" class="empty-history">아직 저장된 3:3 팀 배정 기록이 없어요.</div></div>
+        <div class="shared-history" aria-label="3대3 경기 기록"><div class="shared-history-layout"><div class="shared-history-archive"><div class="section-heading"><div><p class="eyebrow">3 VS 3 MATCH ARCHIVE</p><h3>3:3 경기 기록</h3></div><span id="sharedHistoryCount" class="history-count">0 ROUNDS</span></div><div id="sharedHistoryBody" class="shared-history-body"></div><div id="sharedHistoryEmpty" class="empty-history">아직 저장된 3:3 팀 배정 기록이 없어요.</div></div><aside class="shared-combination-board" aria-label="팀 조합 횟수"><p class="eyebrow">TEAM COMBINATION COUNT</p><h3>팀 조합 횟수</h3><div id="sharedCombinationCounts" class="shared-combination-list"></div></aside></div></div>
       </section>
 
       <section class="section result-section" id="result">
@@ -94,7 +86,7 @@
       </section>
     </div>
    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js?v=three-by-three-cancel-rotation-20260917"></script>
+<script src="app.js?v=three-by-three-history-20260918"></script>
   </body>
 </html>
 

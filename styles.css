@@ -85,3 +85,29 @@ footer>span{text-align:center}
 @media(max-width:760px){.rank-row.money-rank{grid-template-columns:32px minmax(0,1fr) 108px 60px}.rank-row.money-rank .win-rate-text{font-size:10px}.shared-round-teams{grid-template-columns:1fr}.shared-history{margin-top:22px;padding-top:21px}}
 @media(max-width:760px){.shared-winrates{margin-top:22px;padding-top:21px}.shared-winrate-grid{grid-template-columns:repeat(3,1fr);gap:7px}.shared-winrate-card{padding:10px 4px}.shared-winrate-card small{font-size:9px}}
 
+.shared-draw-button{width:100%;margin:17px 0 0;display:flex;align-items:center;justify-content:space-between}
+.shared-draw-button .go-badge{width:28px;height:28px;margin:0;display:inline-grid;place-items:center;border-radius:50%;background:#fff;color:var(--blue);font:700 10px 'DM Mono',monospace}
+.shared-history-layout{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:34px;align-items:start}
+.shared-history-archive{min-width:0}
+.shared-combination-board{border:1px solid var(--line);border-radius:12px;padding:18px;background:#fafbfe}
+.shared-combination-board h3{font:800 18px 'Nanum Myeongjo',serif;margin:0}
+.shared-combination-list{margin-top:15px;display:grid;gap:7px;max-height:345px;overflow:auto;padding-right:2px}
+.shared-combination-row{display:flex;align-items:center;justify-content:space-between;gap:8px;border-radius:7px;background:#fff;padding:9px 10px;font-size:11px;line-height:1.4}
+.shared-combination-row span{min-width:0;color:var(--ink)}
+.shared-combination-row b{flex:0 0 auto;color:var(--blue);font:700 12px 'DM Mono',monospace}
+.shared-combination-empty{margin:15px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
+.shared-history-caption{margin:0 0 8px;color:var(--muted);font:10px 'DM Mono',monospace;letter-spacing:.6px}
+.shared-history-older{margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
+.shared-history-day{border-top:1px solid var(--line)}
+.shared-history-day summary{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 0;cursor:pointer;list-style:none;font-size:12px}
+.shared-history-day summary::-webkit-details-marker{display:none}
+.shared-history-day summary span{color:var(--muted);font-size:11px}
+.shared-history-day[open] summary span{color:var(--blue)}
+.shared-history-day .shared-round-record{margin-left:8px}
+.shared-round-teams span{display:flex;align-items:center;gap:6px}
+.shared-round-teams span em{font-style:normal}
+.shared-round-teams .winning-team{box-shadow:inset 0 0 0 1px currentColor}
+.win-badge{margin-left:auto;padding:3px 5px;border-radius:4px;background:currentColor;color:#fff;font:700 9px 'DM Mono',monospace;letter-spacing:.4px}
+.team-one .win-badge{background:#2857ee}.team-two .win-badge{background:#d23458}
+@media(max-width:760px){.shared-history-layout{grid-template-columns:1fr;gap:20px}.shared-combination-board{order:-1}.shared-combination-list{max-height:none}.shared-draw-button{margin-top:14px}.shared-round-teams span{justify-content:flex-start}}
+
