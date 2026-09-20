@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#101935" />
     <title>오늘의 팀전 | 스코어보드</title>
-    <link rel="stylesheet" href="styles.css?v=earner-standard-card-20260918" />
+    <link rel="stylesheet" href="styles.css?v=synergy-board-20260920" />
   </head>
   <body>
     <header class="topbar">
@@ -54,7 +54,7 @@
           <aside class="assignment-panel shared-assignment-panel"><p class="assignment-label">3 VS 3 MATCH</p><button class="primary-button shared-draw-button" id="drawSharedTeams" type="button">3:3 팀 배정 <span class="go-badge">GO</span></button><div id="sharedAssignmentEmpty" class="assignment-empty">3:3 팀 배정 버튼을 눌러<br />모두의 팀을 정해보세요.</div><div id="sharedAssignmentResult" hidden></div><div id="sharedOutcomeForm" class="shared-outcome-form" hidden><p>경기 후 이긴 팀을 선택한 다음 결과를 저장하세요.</p><div class="shared-winner-options"><button type="button" data-winner="1" aria-pressed="false">1 TEAM 승리</button><button type="button" data-winner="2" aria-pressed="false">2 TEAM 승리</button></div><p id="sharedOutcomeSelection" class="shared-outcome-selection">승리 팀을 선택해 주세요.</p><div class="shared-outcome-actions"><button type="button" id="saveSharedWinner" class="shared-save-button" disabled>결과 저장</button><button type="button" id="cancelSharedAssignment" class="shared-cancel-button">팀 배정 취소</button></div></div></aside>
         </div>
         <div class="shared-winrates" aria-label="공유 경기 개인 승률"><div class="section-heading"><div><p class="eyebrow">PLAYER WIN RATE</p><h3>개인별 승률</h3></div></div><div id="sharedWinRates" class="shared-winrate-grid"></div></div>
-        <div class="shared-history" aria-label="3대3 경기 기록"><div class="shared-history-layout"><div class="shared-history-archive"><div class="section-heading"><div><p class="eyebrow">3 VS 3 MATCH ARCHIVE</p><h3>3:3 경기 기록</h3></div><span id="sharedHistoryCount" class="history-count">0 ROUNDS</span></div><div id="sharedHistoryBody" class="shared-history-body"></div><div id="sharedHistoryEmpty" class="empty-history">아직 저장된 3:3 팀 배정 기록이 없어요.</div></div><aside class="shared-combination-board" aria-label="팀 조합 횟수"><p class="eyebrow">TEAM COMBINATION COUNT</p><h3>팀 조합 횟수</h3><div id="sharedCombinationCounts" class="shared-combination-list"></div></aside></div></div>
+        <div class="shared-history" aria-label="3대3 경기 기록"><div class="shared-history-layout"><div class="shared-history-archive"><div class="section-heading"><div><p class="eyebrow">3 VS 3 MATCH ARCHIVE</p><h3>3:3 경기 기록</h3></div><span id="sharedHistoryCount" class="history-count">0 ROUNDS</span></div><div id="sharedHistoryBody" class="shared-history-body"></div><div id="sharedHistoryEmpty" class="empty-history">아직 저장된 3:3 팀 배정 기록이 없어요.</div></div><div class="shared-sideboards"><aside class="shared-combination-board" aria-label="팀 조합 횟수"><p class="eyebrow">TEAM COMBINATION COUNT</p><h3>팀 조합 횟수</h3><div id="sharedCombinationCounts" class="shared-combination-list"></div></aside><aside class="shared-combination-board shared-synergy-board" aria-label="시너지"><p class="eyebrow">TEAM SYNERGY</p><h3>시너지</h3><p class="shared-board-description">민경·혜빈을 제외한 네 명이 같은 팀으로 만났을 때의 승패입니다.</p><div id="sharedSynergyCounts" class="shared-combination-list"></div></aside></div></div></div>
       </section>
 
       <section class="section result-section" id="result">
@@ -93,7 +93,6 @@
       </section>
     </div>
    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js?v=shared-pending-fix-v3-20260920"></script>
+<script src="app.js?v=synergy-board-20260920"></script>
   </body>
 </html>
-
