@@ -238,3 +238,30 @@ footer { color: #7d858a; }
   .stats-grid .stat-card strong,
   .stats-grid .stat-card small { max-width: 72%; }
 }
+
+@media (max-width: 350px) {
+  .hero {
+    position: relative;
+    display: block;
+    min-height: 225px;
+    padding: 22px 17px 97px;
+  }
+  .hero h1 { font-size: 29px; }
+  .hero .eyebrow { font-size: 9px; }
+  .hero-copy {
+    position: absolute;
+    left: 17px;
+    bottom: 24px;
+    max-width: calc(100% - 115px);
+    margin: 0;
+  }
+  .total-games-card {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    width: 78px;
+    height: 78px;
+  }
+  .total-games-card strong { font-size: 24px; }
+  .total-games-card small { font-size: 8px; }
+}
