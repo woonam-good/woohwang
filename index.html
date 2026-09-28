@@ -4,13 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f2f1ed" />
-    <title>오늘의 팀전 | 스코어보드</title>
+    <title>돈바람 장부 | 스코어보드</title>
     <link rel="stylesheet" href="styles.css?v=synergy-board-20260920" />
-    <link rel="stylesheet" href="theme.css?v=award-cards-20260928" />
+    <link rel="stylesheet" href="theme.css?v=ledger-update-20260929" />
   </head>
   <body>
     <header class="topbar">
-      <a class="brand" href="#dashboard"><span class="brand-mark">T</span><span>오늘의 팀전</span></a>
+      <a class="brand" href="#dashboard"><span class="brand-mark">₩</span><span>돈바람 장부</span></a>
       <nav aria-label="주요 메뉴">
         <a class="active" href="#dashboard">대시보드</a>
         <a href="#sharedLadder">3:3 팀 배정</a>
@@ -24,7 +24,7 @@
         <div>
           <p class="eyebrow">PRIVATE GAME DASHBOARD</p>
           <h1>오늘도<br /><em>고맙습니다.</em></h1>
-          <p class="hero-copy">랜덤 팀 배정부터 승부 기록까지. 우리 여섯의 팀전을 한곳에 남겨보세요.</p>
+          <p class="hero-copy" id="heroCopy">유동성 공급자의 활약을 응원합니다.</p>
         </div>
         <aside class="stat-card total-games-card" aria-label="전체 경기"><span>전체 경기</span><strong id="totalGames">0</strong><small>기록된 모든 경기</small></aside>
       </section>
@@ -62,22 +62,26 @@
         <div class="section-heading"><div><p class="eyebrow">LOG A RESULT</p><h2>개인 결과 기록</h2><p class="section-description">네 명의 수익·손실 금액을 직접 입력해 누적하세요.</p></div></div>
         <form id="resultForm" class="result-form">
           <label>경기 날짜<input id="matchDate" type="date" required /></label>
-          <label>성구<input id="amountSeonggu" type="number" step="1000" placeholder="예: 3000" required /></label>
-          <label>남우<input id="amountNamu" type="number" step="1000" placeholder="예: -3000" required /></label>
-          <label>태원<input id="amountTaewon" type="number" step="1000" placeholder="예: 0" required /></label>
-          <label>민진<input id="amountMinjin" type="number" step="1000" placeholder="예: 6000" required /></label>
+          <label>성구<input id="amountSeonggu" type="text" inputmode="text" pattern="-?[0-9]+" placeholder="예: 3000" required /></label>
+          <label>남우<input id="amountNamu" type="text" inputmode="text" pattern="-?[0-9]+" placeholder="예: -3000" required /></label>
+          <label>태원<input id="amountTaewon" type="text" inputmode="text" pattern="-?[0-9]+" placeholder="예: 0" required /></label>
+          <label>민진<input id="amountMinjin" type="text" inputmode="text" pattern="-?[0-9]+" placeholder="예: 6000" required /></label>
           <button class="primary-button" type="submit">결과 저장 <span>✓</span></button>
         </form>
-        <p class="form-note" id="formNote">금액은 원 단위로 입력하세요. 수익은 양수, 잃은 금액은 음수로 적습니다.</p>
+        <p class="form-note" id="formNote">금액은 원 단위로 입력하세요. 손실은 -3000처럼 앞에 마이너스(-)를 붙입니다.</p>
       </section>
 
       <section class="section history-section" id="history">
         <div class="section-heading"><div><p class="eyebrow">MATCH ARCHIVE</p><h2>경기 기록</h2></div><span id="historyCount" class="history-count">0 GAMES</span></div>
         <div class="history-table-wrap"><table><thead><tr><th>날짜 / 회차</th><th>개인별 증감</th><th></th></tr></thead><tbody id="historyBody"></tbody></table></div>
+        <details class="history-older" id="olderHistory" hidden>
+          <summary>이전 기록 더보기 <span id="olderHistoryCount"></span></summary>
+          <div class="history-table-wrap"><table><thead><tr><th>날짜 / 회차</th><th>개인별 증감</th><th></th></tr></thead><tbody id="historyOlderBody"></tbody></table></div>
+        </details>
         <div class="empty-history" id="emptyHistory">아직 기록된 경기가 없어요. 첫 경기 결과를 남겨보세요!</div>
       </section>
     </main>
-    <footer><button class="reset-button" id="resetData" type="button">데이터 초기화</button><span>오늘의 팀전 · 기록은 서버에서 공유되고 이 브라우저에도 백업됩니다.</span></footer>
+    <footer><button class="reset-button" id="resetData" type="button">데이터 초기화</button><span>돈바람 장부 · 기록은 서버에서 공유되고 이 브라우저에도 백업됩니다.</span></footer>
     <div class="toast" id="toast" role="status"></div>
     <div class="modal-backdrop" id="resetModal" hidden>
       <section class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="resetModalTitle">
@@ -94,6 +98,6 @@
       </section>
     </div>
    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js?v=synergy-count-v2-20260920"></script>
+<script src="app.js?v=ledger-update-20260929"></script>
   </body>
 </html>
