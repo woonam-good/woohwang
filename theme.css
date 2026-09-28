@@ -206,6 +206,27 @@ footer { color: #7d858a; }
   .stats-grid .stat-card strong,
   .stats-grid .stat-card.champion strong,
   .stats-grid .stat-card.liquidity strong { font-size: clamp(27px, 7vw, 34px); }
+  .history-section .history-table-wrap { overflow: visible; }
+  .history-section table,
+  .history-section tbody { display: block; min-width: 0; width: 100%; }
+  .history-section thead { display: none; }
+  .history-section tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 8px;
+    padding: 12px 0;
+    border-top: 1px solid var(--line);
+  }
+  .history-section td { border: 0; padding: 0; min-width: 0; }
+  .history-section td:first-child { grid-column: 1; grid-row: 1; font-weight: 700; }
+  .history-section td.result-summary {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+  }
+  .history-section td:last-child { grid-column: 2; grid-row: 1; }
+  .history-section .remove-match { min-width: 28px; min-height: 28px; }
 }
 
 @media (max-width: 390px) {
