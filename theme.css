@@ -1,0 +1,175 @@
+/* Award card artwork and a calmer palette. Live values remain HTML text. */
+:root {
+  --ink: #243140;
+  --muted: #64717d;
+  --paper: #f2f1ed;
+  --white: #fdfcf9;
+  --line: #e1e2de;
+  --blue: #365d85;
+  --pink: #ae5864;
+  --yellow: #e7c982;
+  --shadow: 0 12px 30px rgba(30, 43, 54, .065);
+}
+
+body {
+  background: radial-gradient(circle at 50% 0, #faf9f6 0, #f2f1ed 720px);
+}
+
+.topbar {
+  background: rgba(253, 252, 249, .96);
+  border-bottom-color: #e7e5df;
+  backdrop-filter: blur(12px);
+}
+.brand-mark { background: #293e55; }
+.topbar nav a.active, .topbar nav a:hover { color: #9e3948; }
+main { max-width: 1240px; }
+
+.hero {
+  min-height: 260px;
+  margin: 22px 0 28px;
+  padding: 36px 40px;
+  border: 1px solid #e1e2e0;
+  border-radius: 24px;
+  background: linear-gradient(110deg, #fcfbf7, #edf0f1);
+  box-shadow: var(--shadow);
+}
+.hero h1 em { color: #ad4050; }
+.hero .eyebrow { color: #95505a; }
+.hero-copy { max-width: 530px; }
+.total-games-card {
+  background: radial-gradient(circle at 35% 25%, #fff 0, #edf1f3 54%, #dbe3e8 100%);
+  border-color: #c8d2d8;
+  box-shadow: 0 12px 27px rgba(46, 69, 88, .11);
+}
+.total-games-card span, .total-games-card small { color: #586f7e; }
+.total-games-card strong { color: #2f5878; }
+
+.stats-grid { gap: 18px; margin-bottom: 29px; }
+.stats-grid .stat-card {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  min-height: 160px;
+  padding: 21px 22px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 19px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+  box-shadow: 0 13px 30px rgba(29, 39, 49, .13);
+}
+.stats-grid .recent-earner-card {
+  background-image: linear-gradient(90deg, rgba(0, 0, 0, .78), rgba(0, 0, 0, .36) 51%, transparent 76%), url('assets/recent-earner-banner.webp');
+  color: #fff4f2;
+}
+.stats-grid .stat-card.champion {
+  background-image: linear-gradient(90deg, rgba(255, 251, 239, .94), rgba(255, 250, 237, .6) 52%, transparent 76%), url('assets/champion-banner.webp');
+  color: #65401b;
+}
+.stats-grid .stat-card.liquidity {
+  background-image: linear-gradient(90deg, rgba(3, 13, 27, .91), rgba(5, 18, 33, .57) 52%, transparent 76%), url('assets/liquidity-banner.webp');
+  color: #eef6ff;
+}
+.stats-grid .recent-earner-card::before,
+.stats-grid .recent-earner-card::after,
+.stats-grid .stat-card.champion::before,
+.stats-grid .stat-card.champion::after,
+.stats-grid .crown-art,
+.stats-grid .ox-art,
+.stats-grid .t1-badge { display: none !important; }
+.stats-grid .stat-card > span:first-child,
+.stats-grid .stat-card strong,
+.stats-grid .stat-card small {
+  position: relative;
+  z-index: 1;
+  width: fit-content;
+  max-width: 70%;
+  margin: 0;
+  transform: none;
+  white-space: normal;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, .22);
+}
+.stats-grid .stat-card > span:first-child {
+  color: inherit;
+  font: 700 13px/1.3 Pretendard, Arial, sans-serif;
+  letter-spacing: -.2px;
+}
+.stats-grid .stat-card strong,
+.stats-grid .stat-card.champion strong,
+.stats-grid .stat-card.liquidity strong {
+  margin: 8px 0 7px;
+  color: inherit;
+  font: 800 clamp(27px, 2.6vw, 35px)/1.12 Pretendard, Arial, sans-serif;
+  letter-spacing: -1.3px;
+  overflow-wrap: anywhere;
+}
+.stats-grid .stat-card small,
+.stats-grid .stat-card.liquidity small {
+  color: inherit;
+  font: 600 12px/1.4 Pretendard, Arial, sans-serif;
+}
+.stats-grid .stat-card.champion > span:first-child,
+.stats-grid .stat-card.champion strong,
+.stats-grid .stat-card.champion small { text-shadow: 0 1px 3px rgba(255, 255, 255, .8); }
+
+.section {
+  background: #fdfcf9;
+  border-color: #e5e4df;
+  box-shadow: var(--shadow);
+}
+.section h2, .shared-history h3, .shared-winrates h3, .shared-combination-board h3 { color: #26384a; }
+.eyebrow { color: #9d5361; }
+.live-dot { color: #37705a; background: #e7f1e9; }
+.primary-button { background: #365d85; box-shadow: 0 7px 15px rgba(54, 93, 133, .18); }
+.assignment-panel, .shared-assignment-panel { background: #25384b; }
+.member-chips span { background: #32485e; }
+.ladder-board { background: #f3f5f4; }
+.shared-combination-board, .shared-winrate-card {
+  background: #f7f7f3;
+  border-color: #e4e5e0;
+}
+.shared-combination-row { background: #fffefd; }
+.result-form input, .result-form select { border-color: #d8dddf; }
+.modal-confirm { background: #365d85; }
+.toast { background: #24384e; }
+footer { color: #7d858a; }
+
+@media (max-width: 760px) {
+  .hero {
+    min-height: 0;
+    margin: 14px 0 18px;
+    padding: 26px 20px;
+    border-radius: 19px;
+    gap: 10px;
+  }
+  .hero h1 { font-size: clamp(29px, 8vw, 36px); }
+  .hero-copy { font-size: 12px; margin-top: 14px; }
+  .total-games-card { width: 108px; height: 108px; }
+  .total-games-card strong { font-size: 31px; }
+  .total-games-card small { font-size: 9px; }
+  .stats-grid { gap: 12px; margin-bottom: 22px; }
+  .stats-grid .stat-card {
+    min-height: 166px;
+    padding: 20px 23px;
+  }
+  .stats-grid .stat-card > span:first-child,
+  .stats-grid .stat-card strong,
+  .stats-grid .stat-card small { max-width: 70%; }
+  .stats-grid .stat-card strong,
+  .stats-grid .stat-card.champion strong,
+  .stats-grid .stat-card.liquidity strong { font-size: clamp(27px, 7vw, 34px); }
+}
+
+@media (max-width: 390px) {
+  .hero { padding: 24px 17px; }
+  .total-games-card { width: 93px; height: 93px; }
+  .total-games-card strong { font-size: 28px; }
+  .stats-grid .stat-card { min-height: 153px; padding: 17px 19px; }
+  .stats-grid .stat-card > span:first-child,
+  .stats-grid .stat-card strong,
+  .stats-grid .stat-card small { max-width: 72%; }
+}
