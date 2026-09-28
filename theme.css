@@ -378,3 +378,12 @@ footer { color: #7d858a; }
   .total-games-card strong { font-size: 24px; }
   .total-games-card small { font-size: 8px; }
 }
+.rank-row.money-rank .score-points em.positive-score { color: #d23458; }
+.shared-winrate-card b.above-even,
+.shared-combination-row .combination-rate.above-even { color: #d23458; }
+.shared-winrate-card b.below-even,
+.shared-combination-row .combination-rate.below-even { color: var(--blue); }
+.shared-winrate-card b.even,
+.shared-combination-row .combination-rate.even { color: var(--ink); }
+.shared-combination-row .combination-wins { color: #d23458; }
+.shared-combination-row .combination-losses { color: var(--blue); }
