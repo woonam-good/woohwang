@@ -229,6 +229,119 @@ footer { color: #7d858a; }
   .history-section .remove-match { min-width: 28px; min-height: 28px; }
 }
 
+/* The shared ladder keeps its existing width while the settlement tool uses
+   the open desktop column beside it. */
+.shared-ladder-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 310px;
+  grid-template-areas: "ladder side" "details side";
+  gap: 18px 24px;
+  align-items: start;
+  width: calc(100vw - 56px);
+  margin-left: calc(50% - 50vw + 28px);
+}
+.shared-ladder-workspace > .section { min-width: 0; margin-bottom: 0; }
+.shared-ladder-section { grid-area: ladder; }
+.shared-ladder-details { grid-area: details; }
+.settlement-panel {
+  grid-area: side;
+  position: sticky;
+  top: 92px;
+  align-self: start;
+  margin-top: 18px;
+  max-height: calc(100vh - 112px);
+  overflow: auto;
+  padding: 22px;
+  background: #fdfcf9;
+}
+.settlement-panel .section-heading { display: block; }
+.settlement-panel .section-heading h2 { font-size: 22px; }
+.settlement-panel .section-description { font-size: 12px; line-height: 1.5; }
+.settlement-date { margin: 17px 0 12px; color: var(--muted); font-size: 11px; }
+.settlement-stake-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.settlement-stake-picker button {
+  min-height: 42px;
+  border: 1px solid #d8dddf;
+  border-radius: 9px;
+  background: #f6f7f5;
+  color: #405768;
+  font-weight: 700;
+}
+.settlement-stake-picker button[aria-pressed="true"] { border-color: #365d85; background: #e7eef4; color: #294b6b; }
+.settlement-start, .settlement-post { width: 100%; margin-top: 11px; }
+.settlement-current-heading { display: grid; gap: 4px; margin: 19px 0 9px; }
+.settlement-current-heading strong, .settlement-subheading strong { color: #26384a; font-size: 13px; }
+.settlement-current-heading span { color: var(--muted); font-size: 10px; line-height: 1.4; }
+.settlement-player-list { display: grid; gap: 6px; }
+.settlement-player-row {
+  display: grid;
+  grid-template-columns: minmax(42px, 1fr) minmax(56px, auto) 78px;
+  gap: 7px;
+  align-items: center;
+  min-height: 43px;
+  padding: 5px 7px 5px 10px;
+  border: 1px solid #e5e7e3;
+  border-radius: 9px;
+  background: #fff;
+}
+.settlement-player-row > strong { font-size: 12px; }
+.settlement-draft-amount { text-align: right; font: 700 11px 'DM Mono', monospace; color: #69757c; }
+.settlement-draft-amount.positive, .settlement-total-row strong.positive, .settlement-posted-totals b.positive { color: #365d85; }
+.settlement-draft-amount.negative, .settlement-total-row strong.negative, .settlement-posted-totals b.negative { color: #ae5864; }
+.settlement-adjust-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.settlement-adjust-actions button {
+  min-height: 31px;
+  border: 0;
+  border-radius: 7px;
+  background: #eaf0f3;
+  color: #315675;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+.settlement-adjust-actions button:last-child { background: #f5e9e9; color: #9a5059; }
+.settlement-adjust-actions button:disabled, .settlement-stake-picker button:disabled { cursor: not-allowed; opacity: .48; }
+.settlement-round-actions { display: grid; grid-template-columns: 1fr; gap: 7px; margin-top: 10px; }
+.settlement-round-actions .primary-button { padding: 11px 12px; }
+.settlement-undo { min-height: 35px; border: 1px solid #e2e4df; border-radius: 8px; background: transparent; color: #687681; font-size: 11px; }
+.settlement-totals { margin-top: 19px; padding-top: 15px; border-top: 1px solid #e5e6e1; }
+.settlement-subheading { display: flex; justify-content: space-between; align-items: baseline; }
+.settlement-subheading span { color: var(--muted); font: 10px 'DM Mono', monospace; }
+.settlement-total-list { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 12px; margin-top: 10px; }
+.settlement-total-row { display: flex; justify-content: space-between; gap: 6px; font-size: 11px; }
+.settlement-total-row span { color: #64717d; }
+.settlement-total-row strong { color: #26384a; font: 700 11px 'DM Mono', monospace; }
+.settlement-balance { margin: 10px 0 0; color: #9a5059; font-size: 10px; line-height: 1.45; }
+.settlement-rounds-details { margin-top: 15px; border-top: 1px solid #e5e6e1; }
+.settlement-rounds-details summary { display: flex; justify-content: space-between; padding: 12px 0 8px; color: #405768; cursor: pointer; font-size: 11px; font-weight: 700; list-style: none; }
+.settlement-rounds-details summary::-webkit-details-marker { display: none; }
+.settlement-rounds-details summary span { color: var(--muted); font-weight: 500; }
+.settlement-round-list { display: grid; gap: 6px; max-height: 200px; overflow: auto; }
+.settlement-round-item { display: grid; gap: 3px; padding: 8px; border-radius: 7px; background: #f4f5f2; }
+.settlement-round-item strong { color: #405768; font-size: 10px; }
+.settlement-round-item strong small { margin-left: 4px; color: var(--muted); font-weight: 500; }
+.settlement-round-item span { color: #687681; font-size: 10px; line-height: 1.45; }
+.settlement-empty-rounds { margin: 4px 0 9px; color: var(--muted); font-size: 10px; }
+.settlement-posted { margin-top: 17px; padding: 13px; border-radius: 10px; background: #edf2ed; color: #355d4c; font-size: 12px; line-height: 1.5; }
+.settlement-posted-totals { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 10px; margin-top: 10px; }
+.settlement-posted-totals span { display: flex; justify-content: space-between; gap: 8px; color: #596c65; font-size: 10px; }
+.settlement-posted-totals b { color: #26384a; font: 700 10px 'DM Mono', monospace; }
+.settlement-round-breakdown { margin-top: 8px; padding-top: 7px; border-top: 1px dashed #dfe3e0; }
+.settlement-round-breakdown summary { color: #405768; cursor: pointer; font-size: 11px; font-weight: 700; }
+.settlement-round-breakdown ul { display: grid; gap: 5px; margin: 7px 0 0; padding: 0; list-style: none; }
+.settlement-round-breakdown li { display: grid; gap: 2px; color: #687681; font-size: 10px; line-height: 1.4; }
+.settlement-round-breakdown li b { color: #405768; }
+@media (max-width: 1250px) {
+  .shared-ladder-workspace { width: auto; margin-left: 0; grid-template-columns: minmax(0, 1fr); grid-template-areas: "ladder" "side" "details"; }
+  .settlement-panel { position: static; max-height: none; overflow: visible; margin-top: 0; }
+}
+@media (max-width: 760px) {
+  .shared-ladder-workspace { gap: 12px; }
+  .settlement-panel { padding: 20px 17px; }
+  .settlement-panel .section-heading h2 { font-size: 21px; }
+  .settlement-player-row { grid-template-columns: minmax(42px, 1fr) minmax(60px, auto) 86px; }
+}
+
 @media (max-width: 390px) {
   .hero { padding: 24px 17px; }
   .total-games-card { width: 93px; height: 93px; }

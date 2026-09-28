@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f2f1ed" />
     <title>돈바람 장부 | 스코어보드</title>
     <link rel="stylesheet" href="styles.css?v=synergy-board-20260920" />
-    <link rel="stylesheet" href="theme.css?v=ledger-mobile-final-20260929" />
+    <link rel="stylesheet" href="theme.css?v=settlement-panel-20260929" />
   </head>
   <body>
     <header class="topbar">
@@ -47,6 +47,7 @@
         </article>
       </section>
 
+      <div class="shared-ladder-workspace">
       <section class="section shared-ladder-section" id="sharedLadder">
         <div class="section-heading"><div><p class="eyebrow">REALTIME 3 VS 3 LADDER</p><h2>3:3 전용 사다리</h2><p class="section-description">혜빈·민경은 매 판 서로 반대 팀으로 교대하고, 나머지 4명은 무작위로 섞입니다.</p></div></div>
         <p class="shared-live-status" id="sharedLiveStatus">아직 공유된 3:3 팀 배정이 없습니다.</p>
@@ -54,12 +55,43 @@
           <div class="ladder-board" aria-label="실시간 3:3 팀 배정 사다리"><canvas id="sharedLadderCanvas" width="760" height="330"></canvas><div class="ladder-players" id="sharedLadderPlayers"></div><div class="ladder-targets" id="sharedLadderTargets" aria-label="도착 팀"></div></div>
           <aside class="assignment-panel shared-assignment-panel"><p class="assignment-label">3 VS 3 MATCH</p><button class="primary-button shared-draw-button" id="drawSharedTeams" type="button">3:3 팀 배정 <span class="go-badge">GO</span></button><div id="sharedAssignmentEmpty" class="assignment-empty">3:3 팀 배정 버튼을 눌러<br />모두의 팀을 정해보세요.</div><div id="sharedAssignmentResult" hidden></div><div id="sharedOutcomeForm" class="shared-outcome-form" hidden><p>경기 후 이긴 팀을 선택한 다음 결과를 저장하세요.</p><div class="shared-winner-options"><button type="button" data-winner="1" aria-pressed="false">1 TEAM 승리</button><button type="button" data-winner="2" aria-pressed="false">2 TEAM 승리</button></div><p id="sharedOutcomeSelection" class="shared-outcome-selection">승리 팀을 선택해 주세요.</p><div class="shared-outcome-actions"><button type="button" id="saveSharedWinner" class="shared-save-button" disabled>결과 저장</button><button type="button" id="cancelSharedAssignment" class="shared-cancel-button">팀 배정 취소</button></div></div></aside>
         </div>
+      </section>
+      <aside class="section settlement-panel" id="settlementPanel" aria-labelledby="settlementTitle">
+        <div class="section-heading"><div><p class="eyebrow">TODAY'S LOL SETTLEMENT</p><h2 id="settlementTitle">오늘의 롤 정산</h2><p class="section-description">판마다 금액을 기록하고 최종 합계를 스코어보드에 반영해요.</p></div></div>
+        <p class="settlement-date" id="settlementDate">정산을 시작하면 네 명이 함께 기록할 수 있어요.</p>
+        <div class="settlement-stake-picker" id="settlementStakePicker" role="group" aria-label="이번 판 금액">
+          <button type="button" data-ledger-stake="3000" aria-pressed="true">3,000원</button>
+          <button type="button" data-ledger-stake="5000" aria-pressed="false">5,000원</button>
+        </div>
+        <button class="primary-button settlement-start" id="startSettlement" type="button">오늘 정산 시작</button>
+        <div class="settlement-active" id="settlementActive" hidden>
+          <div class="settlement-current-heading"><strong id="settlementRoundLabel">1판 기록</strong><span>선택한 금액을 여러 번 눌러 누적할 수 있어요.</span></div>
+          <div class="settlement-player-list" id="settlementPlayerList"></div>
+          <div class="settlement-round-actions">
+            <button class="primary-button" id="saveSettlementRound" type="button">이번 판 기록</button>
+            <button class="settlement-undo" id="undoSettlementRound" type="button">마지막 판 되돌리기</button>
+          </div>
+          <div class="settlement-totals">
+            <div class="settlement-subheading"><strong>오늘 누적</strong><span id="settlementRoundCount">0판</span></div>
+            <div class="settlement-total-list" id="settlementTotals"></div>
+            <p class="settlement-balance" id="settlementBalance" hidden></p>
+          </div>
+          <details class="settlement-rounds-details" id="settlementRoundsDetails">
+            <summary>기록한 판 보기 <span id="settlementRoundsCount">0판</span></summary>
+            <div class="settlement-round-list" id="settlementRoundList"></div>
+          </details>
+          <button class="primary-button settlement-post" id="postSettlement" type="button">최종 합계 스코어보드에 반영</button>
+        </div>
+        <div class="settlement-posted" id="settlementPosted" hidden></div>
+      </aside>
+      <section class="section shared-ladder-details">
         <div class="shared-winrates" aria-label="공유 경기 개인 승률"><div class="section-heading"><div><p class="eyebrow">PLAYER WIN RATE</p><h3>개인별 승률</h3></div></div><div id="sharedWinRates" class="shared-winrate-grid"></div></div>
         <div class="shared-history" aria-label="3대3 경기 기록"><div class="shared-history-layout"><div class="shared-history-archive"><div class="section-heading"><div><p class="eyebrow">3 VS 3 MATCH ARCHIVE</p><h3>3:3 경기 기록</h3></div><span id="sharedHistoryCount" class="history-count">0 ROUNDS</span></div><div id="sharedHistoryBody" class="shared-history-body"></div><div id="sharedHistoryEmpty" class="empty-history">아직 저장된 3:3 팀 배정 기록이 없어요.</div></div><div class="shared-sideboards"><aside class="shared-combination-board" aria-label="팀 조합 횟수"><p class="eyebrow">TEAM COMBINATION COUNT</p><h3>팀 조합 횟수</h3><div id="sharedCombinationCounts" class="shared-combination-list"></div></aside><aside class="shared-combination-board shared-synergy-board" aria-label="시너지"><p class="eyebrow">TEAM SYNERGY</p><h3>시너지</h3><p class="shared-board-description">민경·혜빈을 제외한 네 명이 같은 팀으로 만났을 때의 승패입니다.</p><div id="sharedSynergyCounts" class="shared-combination-list"></div></aside></div></div></div>
       </section>
+      </div>
 
       <section class="section result-section" id="result">
-        <div class="section-heading"><div><p class="eyebrow">LOG A RESULT</p><h2>개인 결과 기록</h2><p class="section-description">네 명의 수익·손실 금액을 직접 입력해 누적하세요.</p></div></div>
+        <div class="section-heading"><div><p class="eyebrow">LOG A RESULT</p><h2>개인 결과 기록</h2><p class="section-description">네 명의 수익·손실 금액을 직접 입력해 누적하세요. 판별 정산은 위쪽 정산판을 이용하세요.</p></div></div>
         <form id="resultForm" class="result-form">
           <label>경기 날짜<input id="matchDate" type="date" required /></label>
           <label>성구<input id="amountSeonggu" type="text" inputmode="text" pattern="-?[0-9]+" placeholder="예: 3000" required /></label>
@@ -86,7 +118,7 @@
     <div class="modal-backdrop" id="resetModal" hidden>
       <section class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="resetModalTitle">
         <p class="eyebrow">RESET DATA</p><h2 id="resetModalTitle">정말로 초기화 하시겠습니까?</h2>
-        <p>모든 사용자가 추가한 경기 기록과 공유 팀 배정 기록이 삭제되며, 1~8회차 기본 기록은 유지됩니다.</p>
+        <p>모든 사용자가 추가한 경기 기록, 공유 팀 배정 기록, 진행 중인 롤 정산이 삭제되며, 1~8회차 기본 기록은 유지됩니다.</p>
         <div class="modal-actions"><button class="modal-cancel" id="cancelReset" type="button">아니오</button><button class="modal-confirm" id="confirmReset" type="button">예</button></div>
       </section>
     </div>
@@ -98,6 +130,6 @@
       </section>
     </div>
    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js?v=ledger-update-20260929"></script>
+<script src="app.js?v=settlement-panel-20260929"></script>
   </body>
 </html>
