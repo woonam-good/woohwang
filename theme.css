@@ -233,12 +233,12 @@ footer { color: #7d858a; }
    the open desktop column beside it. */
 .shared-ladder-workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 310px;
+  grid-template-columns: minmax(0, 1fr) min(310px, calc((100vw - 1240px) / 2 - 24px));
   grid-template-areas: "ladder side" "details side";
   gap: 18px 24px;
   align-items: start;
-  width: calc(100vw - 56px);
-  margin-left: calc(50% - 50vw + 28px);
+  width: calc(100% + min(334px, (100vw - 1240px) / 2));
+  margin-left: 0;
 }
 .shared-ladder-workspace > .section { min-width: 0; margin-bottom: 0; }
 .shared-ladder-section { grid-area: ladder; }
@@ -331,7 +331,7 @@ footer { color: #7d858a; }
 .settlement-round-breakdown ul { display: grid; gap: 5px; margin: 7px 0 0; padding: 0; list-style: none; }
 .settlement-round-breakdown li { display: grid; gap: 2px; color: #687681; font-size: 10px; line-height: 1.4; }
 .settlement-round-breakdown li b { color: #405768; }
-@media (max-width: 1250px) {
+@media (max-width: 1799px) {
   .shared-ladder-workspace { width: auto; margin-left: 0; grid-template-columns: minmax(0, 1fr); grid-template-areas: "ladder" "side" "details"; }
   .settlement-panel { position: static; max-height: none; overflow: visible; margin-top: 0; }
 }
@@ -385,5 +385,6 @@ footer { color: #7d858a; }
 .shared-combination-row .combination-rate.below-even { color: var(--blue); }
 .shared-winrate-card b.even,
 .shared-combination-row .combination-rate.even { color: var(--ink); }
-.shared-combination-row .combination-wins { color: #d23458; }
-.shared-combination-row .combination-losses { color: var(--blue); }
+.shared-combination-row .combination-count,
+.shared-combination-row .combination-wins,
+.shared-combination-row .combination-losses { color: #000; }
