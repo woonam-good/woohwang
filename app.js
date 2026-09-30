@@ -22,7 +22,13 @@ function escapeHtml(value){return String(value).replace(/[&<>"']/g,char=>({'&':'
 function settlementIsClosed(ledger){return Boolean(ledger&&(ledger.closed||ledger.posted));}
 function normaliseSharedRound(round){if(!round||typeof round.id!=='string')return null;const team=(value)=>Array.isArray(value)?value.filter(player=>ladderPlayers.includes(player)):[];const rungs=Array.isArray(round.rungs)?round.rungs.map(row=>Array.isArray(row)?row.filter(col=>Number.isInteger(col)&&col>=0&&col<5):[]):[];const endpointTeams=Array.isArray(round.endpointTeams)&&round.endpointTeams.length===ladderPlayers.length?round.endpointTeams.map(value=>String(value)==='2'?'2':'1'):['1','1','1','2','2','2'];const paths=Array.isArray(round.paths)?round.paths.filter(path=>path&&typeof path==='object').map(path=>({start:Number(path.start)||0,lanes:Array.isArray(path.lanes)?path.lanes.filter(lane=>Number.isInteger(lane)&&lane>=0&&lane<ladderPlayers.length):[],endLane:Number(path.endLane)||0})):[];return {id:round.id,date:validGameDate(round.date)?round.date:null,createdAt:typeof round.createdAt==='string'?round.createdAt:null,team1:team(round.team1),team2:team(round.team2),rungs,endpointTeams,paths,results:Array.isArray(round.results)?round.results.map(value=>String(value)==='2'?'2':'1'):[],winnerTeam:round.winnerTeam===1||round.winnerTeam===2?round.winnerTeam:null};}
 function normaliseLedgerAmounts(value){return Object.fromEntries(ledgerPlayers.map(player=>{const amount=Number(value?.[player]||0);return [player,Number.isSafeInteger(amount)?amount:0];}));}
-function normaliseSettlement(value){if(!value||typeof value.id!=='string'||!validGameDate(value.date))return null;const rounds=Array.isArray(value.rounds)?value.rounds.filter(round=>round&&typeof round.id==='string').map(round=>({id:round.id,stake:round.stake===5000?5000:3000,changes:normaliseLedgerAmounts(round.changes),createdAt:typeof round.createdAt==='string'?round.createdAt:null})):[];return {id:value.id,date:value.date,stake:value.stake===5000?5000:3000,draft:normaliseLedgerAmounts(value.draft),rounds,closed:Boolean(value.closed),posted:Boolean(value.posted),postedMatchId:typeof value.postedMatchId==='string'?value.postedMatchId:null,totals:normaliseLedgerAmounts(value.totals)};}
+function normaliseSettlement(value){
+  if(!value||typeof value.id!=='string'||!validGameDate(value.date))return null;
+  const rawRounds=Array.isArray(value.rounds)?value.rounds.filter(round=>round&&typeof round.id==='string'):[];
+  const rounds=rawRounds.map((round,index)=>({id:round.id,draftId:typeof round.draftId==='string'?round.draftId:(rawRounds[index-1]?.id||'initial'),stake:round.stake===5000?5000:3000,changes:normaliseLedgerAmounts(round.changes),createdAt:typeof round.createdAt==='string'?round.createdAt:null}));
+  const adjustmentReceipts=Object.fromEntries(Object.entries(value.adjustmentReceipts||{}).filter(([actor,seq])=>/^[a-f0-9-]{36}$/.test(actor)&&Number.isSafeInteger(seq)&&seq>0));
+  return {id:value.id,date:value.date,stake:value.stake===5000?5000:3000,draftId:typeof value.draftId==='string'?value.draftId:(rounds[rounds.length-1]?.id||'initial'),draft:normaliseLedgerAmounts(value.draft),rounds,adjustmentReceipts,closed:Boolean(value.closed),posted:Boolean(value.posted),postedMatchId:typeof value.postedMatchId==='string'?value.postedMatchId:null,totals:normaliseLedgerAmounts(value.totals)};
+}
 function normalise(value){const allSharedRounds=Array.isArray(value?.sharedRounds)?value.sharedRounds.map(normaliseSharedRound).filter(Boolean):[];let activeSharedRoundId=typeof value?.activeSharedRoundId==='string'&&allSharedRounds.some(round=>round.id===value.activeSharedRoundId)?value.activeSharedRoundId:(allSharedRounds[allSharedRounds.length-1]?.id||null);const activeRound=allSharedRounds.find(round=>round.id===activeSharedRoundId),activePendingId=activeRound&&!activeRound.winnerTeam?activeRound.id:null;const sharedRounds=allSharedRounds.filter(round=>round.winnerTeam===1||round.winnerTeam===2||round.id===activePendingId);if(!sharedRounds.some(round=>round.id===activeSharedRoundId))activeSharedRoundId=sharedRounds[sharedRounds.length-1]?.id||null;const nextHyeBinTeam=value?.nextHyeBinTeam===2?2:1,revision=Number.isSafeInteger(value?.revision)&&value.revision>=0?value.revision:0;return {matches:Array.isArray(value?.matches)?value.matches.filter(match=>match&&typeof match==='object').map((match,index)=>({...match,id:match.id??`legacy-${index}`,date:validGameDate(match.date)?match.date:null,changes:normaliseLedgerAmounts(match.changes)})):[],nextHyeBinTeam,nextSharedHyeBinTeam:value?.nextSharedHyeBinTeam===2?2:nextHyeBinTeam,sharedRounds,activeSharedRoundId,settlement:normaliseSettlement(value?.settlement),settlementHistory:Array.isArray(value?.settlementHistory)?value.settlementHistory.map(normaliseSettlement).filter(Boolean):[],revision};}
 let localSnapshot;
 try { localSnapshot=normalise(JSON.parse(localStorage.getItem(storageKey)||'{}')); }
@@ -35,8 +41,15 @@ let syncWarningShown = false;
 let selectedSharedWinner = null;
 let selectedSharedRoundId = null;
 let pendingSharedDeleteId = null;
-let pendingSettlementFinishId = null;
+let pendingSettlementResetId = null;
 let selectedLedgerStake = localSnapshot.settlement?.stake ?? 3000;
+const ledgerQueueKey = `${storageKey}-settlement-adjustments-v1`;
+let ledgerAdjustments=[];
+try{const saved=JSON.parse(localStorage.getItem(ledgerQueueKey)||'[]');if(Array.isArray(saved))ledgerAdjustments=saved.filter(op=>op&&typeof op.ledgerId==='string'&&typeof op.draftId==='string'&&/^[a-f0-9-]{36}$/.test(op.actor)&&Number.isSafeInteger(op.seq)&&op.seq>0&&ledgerPlayers.includes(op.player)&&[3000,5000,-3000,-5000].includes(op.delta));}catch(error){console.warn('Settlement queue could not be read',error);}
+const ledgerActor=crypto.randomUUID();
+const ledgerOperationKey=op=>`${op.actor}:${op.seq}`;
+const managedLedgerOperations=new Set(ledgerAdjustments.map(ledgerOperationKey));
+let ledgerSequence=0,ledgerSaveTimer=null,ledgerFlushPromise=null,ledgerSaveError=false,ledgerStorageWarningShown=false;
 const ladderRowCount = 9;
 const ladderTop = 43;
 const ladderXs = [70, 194, 318, 442, 566, 690];
@@ -46,8 +59,15 @@ const today = localDateString();
 let suggestedDate = today;
 function refreshDefaultMatchDate(){const current=localDateString(),input=$('matchDate');if(input.value===suggestedDate)input.value=current;suggestedDate=current;}
 function backup(){try{localStorage.setItem(storageKey,JSON.stringify(state));}catch(error){console.warn('Local backup failed',error);}}
-function setBusy(value){working=value;for(const id of ['confirmReset','confirmSharedDelete','confirmSettlementFinish','resetData','cancelSharedAssignment']){const control=$(id);if(control)control.disabled=value||!ready;}const draw=$('drawSharedTeams'),active=getActiveSharedRound(),hasPending=Boolean(active&&!active.winnerTeam);if(draw){draw.disabled=value||!ready||hasPending;draw.title=hasPending?'현재 팀 배정의 결과를 저장하거나 취소한 뒤 새로 배정할 수 있습니다.':'';}$('resultForm').querySelector('button[type="submit"]').disabled=value||!ready;document.querySelectorAll('.remove-match,.remove-shared-round,.shared-winner-options button').forEach(button=>button.disabled=value||!ready);const save=$('saveSharedWinner');if(save)save.disabled=value||!ready||!selectedSharedWinner||selectedSharedRoundId!==state.activeSharedRoundId;const ledger=state.settlement,ledgerActive=Boolean(ledger&&!settlementIsClosed(ledger)),ledgerHasDraft=hasLedgerDraft(ledger);document.querySelectorAll('[data-ledger-stake]').forEach(button=>button.disabled=settlementIsClosed(ledger));document.querySelectorAll('[data-ledger-player]').forEach(button=>button.disabled=value||!ready||!ledgerActive);const start=$('startSettlement');if(start)start.disabled=value||!ready||ledgerActive;const saveRound=$('saveSettlementRound');if(saveRound)saveRound.disabled=value||!ready||!ledgerActive||!ledgerHasDraft;const finish=$('finishSettlement');if(finish)finish.disabled=value||!ready||!ledgerActive;const undoRound=$('undoSettlementRound');if(undoRound)undoRound.disabled=value||!ready||!ledgerActive||!ledger?.rounds.length;}
-function applyState(value){state=normalise(value);backup();renderAll();renderSharedLadder();setBusy(working);}
+function setBusy(value){working=value;for(const id of ['confirmReset','confirmSharedDelete','confirmSettlementReset','resetData','cancelSharedAssignment']){const control=$(id);if(control)control.disabled=value||!ready;}const draw=$('drawSharedTeams'),active=getActiveSharedRound(),hasPending=Boolean(active&&!active.winnerTeam);if(draw){draw.disabled=value||!ready||hasPending;draw.title=hasPending?'현재 팀 배정의 결과를 저장하거나 취소한 뒤 새로 배정할 수 있습니다.':'';}$('resultForm').querySelector('button[type="submit"]').disabled=value||!ready;document.querySelectorAll('.remove-match,.remove-shared-round,.shared-winner-options button').forEach(button=>button.disabled=value||!ready);const save=$('saveSharedWinner');if(save)save.disabled=value||!ready||!selectedSharedWinner||selectedSharedRoundId!==state.activeSharedRoundId;const ledger=displayedSettlement(),ledgerActive=Boolean(ledger&&!settlementIsClosed(ledger)),ledgerHasDraft=hasLedgerDraft(ledger);document.querySelectorAll('[data-ledger-stake]').forEach(button=>button.disabled=settlementIsClosed(ledger));document.querySelectorAll('[data-ledger-player]').forEach(button=>button.disabled=value||!ready||!ledgerActive);const start=$('startSettlement');if(start)start.disabled=value||!ready||ledgerActive;const saveRound=$('saveSettlementRound');if(saveRound)saveRound.disabled=value||!ready||!ledgerActive||!ledgerHasDraft;const reset=$('resetSettlement');if(reset)reset.disabled=value||!ready||!ledger;const retry=$('retrySettlementSave');if(retry)retry.disabled=value||!ready||Boolean(ledgerFlushPromise);const undoRound=$('undoSettlementRound');if(undoRound)undoRound.disabled=value||!ready||!ledgerActive||!ledger?.rounds.length;}
+function applyState(value,settlementOnly=false){
+  const previous=state;state=normalise(value);reconcileLedgerAdjustments();backup();
+  const otherData=({settlement,revision,...rest})=>JSON.stringify(rest);
+  if(settlementOnly&&state.settlement&&previous.settlement?.id===state.settlement.id&&!settlementIsClosed(state.settlement)&&otherData(previous)===otherData(state)){
+    renderSettlementAmounts();renderSettlementRounds(displayedSettlement());
+  }else{renderAll();renderSharedLadder();}
+  setBusy(working);
+}
 async function readServer(){const {data,error}=await db.from('scoreboard_state').select('game_state').eq('id',1).single();if(error)throw error;return data.game_state||{};}
 // Compare a short revision number instead of the complete JSON payload. This keeps
 // optimistic concurrency protection without creating an oversized request URL.
@@ -69,24 +89,99 @@ function renderDashboard(){const stats=getPlayerStats(),ordered=scoreboardPlayer
 function emptyLedgerAmounts(){return Object.fromEntries(ledgerPlayers.map(player=>[player,0]));}
 function settlementTotals(settlement,includeDraft=true){const totals=emptyLedgerAmounts();settlement.rounds.forEach(round=>ledgerPlayers.forEach(player=>{totals[player]+=round.changes[player];}));if(includeDraft)ledgerPlayers.forEach(player=>{totals[player]+=settlement.draft[player];});return totals;}
 function hasLedgerDraft(settlement){return Boolean(settlement&&Object.values(settlement.draft).some(amount=>amount!==0));}
+// Receipts retain one sequence number per browser, rather than one entry per tap.
+// A draft ID also lets late taps reach the correct round after another screen saves it.
+function applyLedgerAdjustments(ledger,operations){
+  if(!ledger||settlementIsClosed(ledger))return ledger;
+  const next={...ledger,draft:{...ledger.draft},rounds:ledger.rounds.map(round=>({...round,changes:{...round.changes}})),adjustmentReceipts:{...ledger.adjustmentReceipts}};
+  for(const op of operations){
+    if(op.ledgerId!==next.id||(next.adjustmentReceipts[op.actor]||0)>=op.seq)continue;
+    const round=op.draftId===next.draftId?null:next.rounds.find(item=>item.draftId===op.draftId);
+    if(op.draftId!==next.draftId&&!round)continue;
+    const amounts=round?round.changes:next.draft,amount=amounts[op.player]+op.delta;
+    if(!Number.isSafeInteger(amount))throw Error('입력 가능한 금액 범위를 넘었습니다.');
+    amounts[op.player]=amount;if(!round)next.stake=Math.abs(op.delta);
+    next.adjustmentReceipts[op.actor]=op.seq;
+  }
+  return next;
+}
+function displayedSettlement(){return applyLedgerAdjustments(state.settlement,ledgerAdjustments);}
+function persistLedgerAdjustments(){
+  try{
+    // Tabs share localStorage. Leave other tabs' new operations in their backup.
+    const raw=localStorage.getItem(ledgerQueueKey);let saved=[];
+    try{saved=JSON.parse(raw||'[]');}catch{ /* Replace a damaged backup on the next write. */ }
+    const otherOperations=Array.isArray(saved)?saved.filter(op=>op&&!managedLedgerOperations.has(ledgerOperationKey(op))):[];
+    localStorage.setItem(ledgerQueueKey,JSON.stringify([...otherOperations,...ledgerAdjustments]));
+  }
+  catch(error){console.warn('Settlement queue backup failed',error);if(ledgerAdjustments.length&&!ledgerStorageWarningShown){ledgerStorageWarningShown=true;showToast('브라우저 임시 저장이 차단되어 있어요. 저장 완료를 확인한 뒤 화면을 닫아 주세요.');}}
+}
+function reconcileLedgerAdjustments(){
+  const ledger=state.settlement;let stale=false;
+  ledgerAdjustments=ledgerAdjustments.filter(op=>{
+    if(ledger&&(ledger.adjustmentReceipts[op.actor]||0)>=op.seq)return false;
+    if(!ledger||settlementIsClosed(ledger)||op.ledgerId!==ledger.id||(op.draftId!==ledger.draftId&&!ledger.rounds.some(round=>round.draftId===op.draftId))){stale=true;return false;}
+    return true;
+  });
+  if(!ledgerAdjustments.length)ledgerSaveError=false;
+  persistLedgerAdjustments();
+  if(stale)showToast('다른 화면에서 정산 기록이 변경되어 현재 기록으로 갱신했어요.');
+}
+function renderSettlementSync(){
+  const status=$('settlementSyncStatus'),retry=$('retrySettlementSave');
+  status.textContent=ledgerAdjustments.length?(ledgerSaveError?'저장하지 못했어요. 입력은 이 브라우저에 남아 있어요.':'저장 중…'):state.settlement?'저장 완료':'';
+  status.classList.toggle('save-error',ledgerSaveError);retry.hidden=!ledgerSaveError;
+  retry.disabled=working||!ready||Boolean(ledgerFlushPromise);
+}
+function renderSettlementAmounts(){
+  const ledger=displayedSettlement();if(!ledger||settlementIsClosed(ledger)){renderSettlementSync();return;}
+  const totals=settlementTotals(ledger);
+  for(const player of ledgerPlayers){
+    for(const [id,amount] of [[`ledgerDraft-${player}`,ledger.draft[player]],[`ledgerTotal-${player}`,totals[player]]]){
+      const element=$(id);if(element){element.textContent=formatChange(amount);element.classList.toggle('positive',amount>0);element.classList.toggle('negative',amount<0);}
+    }
+  }
+  $('settlementRoundCount').textContent=`${ledger.rounds.length}판${hasLedgerDraft(ledger)?' + 현재 판':''}`;
+  const balance=ledgerPlayers.reduce((sum,player)=>sum+totals[player],0),note=$('settlementBalance');
+  note.hidden=balance===0;note.textContent=balance===0?'':`네 명 합계 차액 ${formatChange(balance)} · 금액을 확인해 주세요.`;
+  $('saveSettlementRound').disabled=working||!ready||!hasLedgerDraft(ledger);renderSettlementSync();
+}
+function scheduleLedgerSave(){
+  if(ledgerSaveTimer!==null||ledgerFlushPromise||!ready||!ledgerAdjustments.length)return;
+  ledgerSaveTimer=setTimeout(()=>{ledgerSaveTimer=null;flushLedgerAdjustments();},350);
+}
+function flushLedgerAdjustments(){
+  if(ledgerSaveTimer!==null){clearTimeout(ledgerSaveTimer);ledgerSaveTimer=null;}
+  if(ledgerFlushPromise)return ledgerFlushPromise;
+  if(!ready||!ledgerAdjustments.length)return Promise.resolve(!ledgerAdjustments.length);
+  const batch=[...ledgerAdjustments];ledgerSaveError=false;
+  const job=pending.catch(()=>{}).then(async()=>{
+    try{
+      const result=await changeServer(base=>{
+        const ledger=applyLedgerAdjustments(base.settlement,batch);
+        return JSON.stringify(ledger)===JSON.stringify(base.settlement)?null:{...base,settlement:ledger};
+      });
+      applyState(result.state,true);return true;
+    }catch(error){console.error('Settlement save failed',error);ledgerSaveError=true;return false;}
+    finally{ledgerFlushPromise=null;renderSettlementSync();if(!ledgerSaveError)scheduleLedgerSave();}
+  });
+  ledgerFlushPromise=job;pending=job;renderSettlementSync();return job;
+}
+function renderSettlementRounds(settlement){
+  const rounds=settlement.rounds;$('settlementRoundLabel').textContent=`${rounds.length+1}판 기록`;$('settlementRoundsCount').textContent=`${rounds.length}판`;
+  $('settlementRoundList').innerHTML=rounds.length?[...rounds].reverse().map((round,index)=>`<div class="settlement-round-item"><strong>${rounds.length-index}판 <small>${round.stake.toLocaleString()}원 선택</small></strong><span>${ledgerPlayers.filter(player=>round.changes[player]!==0).map(player=>`${player} ${formatChange(round.changes[player])}`).join(' · ')||'변동 없음'}</span></div>`).join(''):'<p class="settlement-empty-rounds">아직 기록한 판이 없어요.</p>';
+}
 function renderSettlement(){
-  const settlement=state.settlement,start=$('startSettlement'),active=$('settlementActive'),posted=$('settlementPosted'),closed=settlementIsClosed(settlement),stake=selectedLedgerStake;
+  const settlement=displayedSettlement(),start=$('startSettlement'),active=$('settlementActive'),closed=settlementIsClosed(settlement),stake=selectedLedgerStake;
   document.querySelectorAll('[data-ledger-stake]').forEach(button=>{button.setAttribute('aria-pressed',String(Number(button.dataset.ledgerStake)===stake));button.disabled=closed;});
-  start.hidden=Boolean(settlement&&!closed);start.textContent=closed?'새 정산 시작':'오늘 정산 시작';active.hidden=!settlement||closed;posted.hidden=!closed;
-  $('settlementDate').textContent=settlement?`${formatHistoryDate(settlement.date)} 정산${closed?' · 마무리 완료':''}`:'정산을 시작하면 네 명이 함께 기록할 수 있어요.';
-  const totalsMarkup=totals=>ledgerPlayers.map(player=>`<span>${player}<b class="${totals[player]>0?'positive':totals[player]<0?'negative':''}">${formatChange(totals[player])}</b></span>`).join('');
-  const roundsMarkup=rounds=>[...rounds].reverse().map((round,index)=>`<div class="settlement-round-item"><strong>${rounds.length-index}판 <small>${round.stake.toLocaleString()}원 선택</small></strong><span>${ledgerPlayers.filter(player=>round.changes[player]!==0).map(player=>`${player} ${formatChange(round.changes[player])}`).join(' · ')||'변동 없음'}</span></div>`).join('');
-  const history=state.settlementHistory;$('settlementArchive').hidden=history.length===0;
-  $('settlementArchiveList').innerHTML=[...history].reverse().map(ledger=>`<details class="settlement-round-item"><summary>${formatHistoryDate(ledger.date)} · ${ledger.rounds.length}판</summary><div class="settlement-posted-totals">${totalsMarkup(settlementTotals(ledger))}</div>${roundsMarkup(ledger.rounds)}</details>`).join('');
-  if(!settlement){$('settlementPlayerList').innerHTML='';$('settlementTotals').innerHTML='';$('settlementRoundList').innerHTML='';return;}
-  if(closed){posted.innerHTML=`<strong>${settlement.posted?'이전 정산 · 스코어보드 반영 완료':'정산 기록을 보관했어요. 최종 금액은 직접 입력해 주세요.'}</strong><div class="settlement-posted-totals">${totalsMarkup(settlementTotals(settlement))}</div>`;return;}
-  $('settlementRoundLabel').textContent=`${settlement.rounds.length+1}판 기록`;
-  $('settlementPlayerList').innerHTML=ledgerPlayers.map(player=>{const change=settlement.draft[player],tone=change>0?'positive':change<0?'negative':'';return `<div class="settlement-player-row"><strong>${player}</strong><span class="settlement-draft-amount ${tone}">${formatChange(change)}</span><div class="settlement-adjust-actions"><button type="button" data-ledger-player="${player}" data-ledger-direction="1" aria-label="${player} ${stake.toLocaleString()}원 더하기">+</button><button type="button" data-ledger-player="${player}" data-ledger-direction="-1" aria-label="${player} ${stake.toLocaleString()}원 빼기">−</button></div></div>`;}).join('');
-  const totals=settlementTotals(settlement),rounds=settlement.rounds;
-  $('settlementRoundCount').textContent=`${rounds.length}판${hasLedgerDraft(settlement)?' + 현재 판':''}`;$('settlementRoundsCount').textContent=`${rounds.length}판`;
-  $('settlementTotals').innerHTML=ledgerPlayers.map(player=>{const amount=totals[player],tone=amount>0?'positive':amount<0?'negative':'';return `<div class="settlement-total-row"><span>${player}</span><strong class="${tone}">${formatChange(amount)}</strong></div>`;}).join('');
-  const balance=ledgerPlayers.reduce((sum,player)=>sum+totals[player],0),balanceNote=$('settlementBalance');balanceNote.hidden=balance===0;balanceNote.textContent=balance===0?'':`네 명 합계 차액 ${formatChange(balance)} · 금액을 확인해 주세요.`;
-  $('settlementRoundList').innerHTML=rounds.length?roundsMarkup(rounds):'<p class="settlement-empty-rounds">아직 기록한 판이 없어요.</p>';setBusy(working);
+  start.hidden=Boolean(settlement&&!closed);start.textContent=closed?'새 정산 시작':'오늘 정산 시작';active.hidden=!settlement||closed;
+  $('settlementDate').textContent=settlement?closed?'새 정산을 시작하거나 기록을 초기화해 주세요.':`${formatHistoryDate(settlement.date)} 정산`:'정산을 시작하면 네 명이 함께 기록할 수 있어요.';
+  $('resetSettlement').hidden=!settlement;
+  if(!settlement||closed){$('settlementPlayerList').innerHTML='';$('settlementTotals').innerHTML='';$('settlementRoundList').innerHTML='';renderSettlementSync();return;}
+  $('settlementPlayerList').innerHTML=ledgerPlayers.map(player=>`<div class="settlement-player-row"><strong>${player}</strong><span id="ledgerDraft-${player}" class="settlement-draft-amount"></span><div class="settlement-adjust-actions"><button type="button" data-ledger-player="${player}" data-ledger-direction="1" aria-label="${player} ${stake.toLocaleString()}원 더하기">+</button><button type="button" data-ledger-player="${player}" data-ledger-direction="-1" aria-label="${player} ${stake.toLocaleString()}원 빼기">−</button></div></div>`).join('');
+  $('settlementTotals').innerHTML=ledgerPlayers.map(player=>`<div class="settlement-total-row"><span>${player}</span><strong id="ledgerTotal-${player}"></strong></div>`).join('');
+  renderSettlementRounds(settlement);
+  renderSettlementAmounts();setBusy(working);
 }
 function ladderRowY(row,height){return ladderTop+((height-45-ladderTop)/(ladderRowCount+1))*(row+1);}
 function traceLadder(start,rungs){let lane=start;const lanes=[lane];for(const row of rungs){if(row.includes(lane))lane+=1;else if(row.includes(lane-1))lane-=1;lanes.push(lane);}return {start,lanes,endLane:lane};}
@@ -109,43 +204,58 @@ function renderSharedHistory(){const rounds=state.sharedRounds.filter(round=>rou
 function renderSharedCombinationCounts(){const counts=new Map();state.sharedRounds.filter(round=>round.winnerTeam===1||round.winnerTeam===2).forEach(round=>[round.team1,round.team2].forEach((members,index)=>{if(members.length!==3)return;const players=[...members].sort((a,b)=>ladderPlayers.indexOf(a)-ladderPlayers.indexOf(b)),key=players.join('|'),team=index+1;const entry=counts.get(key)||{players,count:0,wins:0,losses:0};entry.count+=1;if(round.winnerTeam===team)entry.wins+=1;else entry.losses+=1;counts.set(key,entry);}));const items=[...counts.values()].sort((a,b)=>b.count-a.count||a.players.join('').localeCompare(b.players.join(''),'ko'));$('sharedCombinationCounts').innerHTML=items.length?items.map(item=>`<div class="shared-combination-row"><span>${item.players.join(' · ')}</span><b><i class="combination-count">${item.count}전</i><i class="combination-wins">${item.wins}승</i><i class="combination-losses">${item.losses}패</i><i class="combination-rate ${winRateTone(item)}">승률 ${winRate(item)}%</i></b></div>`).join(''):'<p class="shared-combination-empty">아직 팀 조합 기록이 없어요.</p>';}
 function renderSharedSynergies(){const counts=new Map(),completed=state.sharedRounds.filter(round=>round.winnerTeam===1||round.winnerTeam===2);completed.forEach(round=>[round.team1,round.team2].forEach((members,index)=>{const teammates=members.filter(player=>synergyPlayers.includes(player));for(let first=0;first<teammates.length;first+=1){for(let second=first+1;second<teammates.length;second+=1){const players=[teammates[first],teammates[second]].sort((a,b)=>synergyPlayers.indexOf(a)-synergyPlayers.indexOf(b)),key=players.join('|'),entry=counts.get(key)||{players,wins:0,losses:0};if(round.winnerTeam===index+1)entry.wins+=1;else entry.losses+=1;counts.set(key,entry);}}}));const items=[...counts.values()].sort((a,b)=>(b.wins+b.losses)-(a.wins+a.losses)||b.wins-a.wins||a.players.join('').localeCompare(b.players.join(''),'ko'));$('sharedSynergyCounts').innerHTML=items.length?items.map(item=>`<div class="shared-combination-row"><span>${item.players.join(' · ')}</span><b><i class="combination-count">${item.wins+item.losses}전</i><i class="combination-wins">${item.wins}승</i><i class="combination-losses">${item.losses}패</i><i class="combination-rate ${winRateTone(item)}">승률 ${winRate(item)}%</i></b></div>`).join(''):'<p class="shared-combination-empty">아직 시너지 기록이 없어요.</p>';}
 function showToast(message){const t=$('toast');t.textContent=message;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2300);}
+function createDailySettlement(){return normaliseSettlement({id:crypto.randomUUID(),date:localDateString(),stake:selectedLedgerStake,draft:emptyLedgerAmounts(),rounds:[]});}
 function startDailySettlement(){
-  if(!ready||working)return;const stake=selectedLedgerStake,settlement={id:crypto.randomUUID(),date:localDateString(),stake,draft:emptyLedgerAmounts(),rounds:[],closed:false,posted:false,postedMatchId:null,totals:emptyLedgerAmounts()};
-  enqueue(base=>{if(base.settlement&&!settlementIsClosed(base.settlement))return null;const history=[...base.settlementHistory];if(base.settlement&&!history.some(item=>item.id===base.settlement.id))history.push(base.settlement);return {...base,settlement,settlementHistory:history};},'오늘 정산을 시작했어요.');
+  if(!ready||working)return;const settlement=createDailySettlement();
+  enqueue(base=>base.settlement&&!settlementIsClosed(base.settlement)?null:{...base,settlement,settlementHistory:[]},'오늘 정산을 시작했어요.');
 }
 function selectSettlementStake(value){if(settlementIsClosed(state.settlement))return;selectedLedgerStake=value===5000?5000:3000;document.querySelectorAll('[data-ledger-stake]').forEach(button=>button.setAttribute('aria-pressed',String(Number(button.dataset.ledgerStake)===selectedLedgerStake)));document.querySelectorAll('[data-ledger-player]').forEach(button=>button.setAttribute('aria-label',`${button.dataset.ledgerPlayer} ${selectedLedgerStake.toLocaleString()}원 ${Number(button.dataset.ledgerDirection)===1?'더하기':'빼기'}`));}
 function adjustSettlementAmount(player,direction){
-  if(!ready||working||!ledgerPlayers.includes(player)||!state.settlement||settlementIsClosed(state.settlement)||![1,-1].includes(direction))return;
-  const ledgerId=state.settlement.id,stake=selectedLedgerStake,current=state.settlement.draft[player],step=stake*direction;
-  if(!Number.isSafeInteger(current+step)){showToast('입력 가능한 금액 범위를 넘었습니다.');return;}
-  enqueue(base=>{const ledger=base.settlement;if(!ledger||ledger.id!==ledgerId||settlementIsClosed(ledger))return null;const amount=ledger.draft[player]+step;if(!Number.isSafeInteger(amount))return null;return {...base,settlement:{...ledger,stake,draft:{...ledger.draft,[player]:amount}}};});
+  const ledger=displayedSettlement();
+  if(!ready||working||!ledgerPlayers.includes(player)||!ledger||settlementIsClosed(ledger)||![1,-1].includes(direction))return;
+  const step=selectedLedgerStake*direction;
+  if(!Number.isSafeInteger(ledger.draft[player]+step)){showToast('입력 가능한 금액 범위를 넘었습니다.');return;}
+  const operation={ledgerId:ledger.id,draftId:ledger.draftId,actor:ledgerActor,seq:++ledgerSequence,player,delta:step};
+  ledgerAdjustments.push(operation);managedLedgerOperations.add(ledgerOperationKey(operation));
+  ledgerSaveError=false;persistLedgerAdjustments();renderSettlementAmounts();scheduleLedgerSave();
 }
 function saveSettlementRound(){
-  if(!ready||working||!hasLedgerDraft(state.settlement)){showToast('이번 판에서 기록한 금액이 없습니다.');return;}
-  const ledgerId=state.settlement.id,id=crypto.randomUUID(),createdAt=new Date().toISOString();
-  enqueue(base=>{const ledger=base.settlement;if(!ledger||ledger.id!==ledgerId||settlementIsClosed(ledger)||!hasLedgerDraft(ledger))return null;const round={id,stake:ledger.stake,changes:{...ledger.draft},createdAt};return {...base,settlement:{...ledger,rounds:[...ledger.rounds,round],draft:emptyLedgerAmounts()}};},'이번 판 금액을 저장했어요.');
+  const current=displayedSettlement();
+  if(!ready||working||!current||settlementIsClosed(current)||!hasLedgerDraft(current)){showToast('이번 판에서 기록한 금액이 없습니다.');return;}
+  const ledgerId=current.id,draftId=current.draftId,id=crypto.randomUUID(),createdAt=new Date().toISOString(),batch=[...ledgerAdjustments];
+  enqueue(base=>{
+    const ledger=applyLedgerAdjustments(base.settlement,batch);
+    if(!ledger||ledger.id!==ledgerId||settlementIsClosed(ledger))return null;
+    if(ledger.draftId!==draftId||!hasLedgerDraft(ledger))return JSON.stringify(ledger)===JSON.stringify(base.settlement)?null:{...base,settlement:ledger};
+    const round={id,draftId,stake:ledger.stake,changes:{...ledger.draft},createdAt};
+    return {...base,settlement:{...ledger,rounds:[...ledger.rounds,round],draftId:id,draft:emptyLedgerAmounts()}};
+  },'이번 판 금액을 저장했어요.');
 }
 function undoSettlementRound(){
   if(!ready||working||!state.settlement?.rounds.length)return;const ledgerId=state.settlement.id,roundId=state.settlement.rounds[state.settlement.rounds.length-1].id;
   if(!confirm('마지막 판 기록을 되돌릴까요?'))return;
   enqueue(base=>{const ledger=base.settlement;if(!ledger||ledger.id!==ledgerId||settlementIsClosed(ledger)||ledger.rounds[ledger.rounds.length-1]?.id!==roundId)return null;return {...base,settlement:{...ledger,rounds:ledger.rounds.slice(0,-1)}};},'마지막 판 기록을 되돌렸어요.');
 }
-function finishDailySettlement(){
-  if(!ready||working||!state.settlement||settlementIsClosed(state.settlement))return;
-  pendingSettlementFinishId=state.settlement.id;$('settlementFinishModal').hidden=false;
+function resetDailySettlement(){
+  if(!ready||working||!state.settlement)return;
+  pendingSettlementResetId=state.settlement.id;$('settlementResetModal').hidden=false;
 }
-async function confirmFinishDailySettlement(){
-  if(!ready||working||!pendingSettlementFinishId)return;
-  const ledgerId=pendingSettlementFinishId,id=crypto.randomUUID(),createdAt=new Date().toISOString();
-  if(await enqueue(base=>{const ledger=base.settlement;if(!ledger||ledger.id!==ledgerId||settlementIsClosed(ledger))return null;const rounds=[...ledger.rounds];if(hasLedgerDraft(ledger))rounds.push({id,stake:ledger.stake,changes:{...ledger.draft},createdAt});return {...base,settlement:{...ledger,rounds,draft:emptyLedgerAmounts(),closed:true}};},'정산을 마무리하고 기록을 보관했어요.')){$('settlementFinishModal').hidden=true;pendingSettlementFinishId=null;}
+async function confirmResetDailySettlement(){
+  if(!ready||working||!pendingSettlementResetId)return;
+  const ledgerId=pendingSettlementResetId,settlement=createDailySettlement();
+  const changed=await enqueue(base=>base.settlement?.id!==ledgerId?null:{...base,settlement,settlementHistory:[]},'정산 기록을 초기화했어요.');
+  if(changed||state.settlement?.id!==ledgerId){$('settlementResetModal').hidden=true;pendingSettlementResetId=null;}
 }
 $('settlementPanel').addEventListener('click',event=>{const stakeButton=event.target.closest('[data-ledger-stake]');if(stakeButton){selectSettlementStake(Number(stakeButton.dataset.ledgerStake));return;}const playerButton=event.target.closest('[data-ledger-player]');if(playerButton){adjustSettlementAmount(playerButton.dataset.ledgerPlayer,Number(playerButton.dataset.ledgerDirection));}});
 $('startSettlement').addEventListener('click',startDailySettlement);
 $('saveSettlementRound').addEventListener('click',saveSettlementRound);
 $('undoSettlementRound').addEventListener('click',undoSettlementRound);
-$('finishSettlement').addEventListener('click',finishDailySettlement);
-$('confirmSettlementFinish').addEventListener('click',confirmFinishDailySettlement);
-$('cancelSettlementFinish').addEventListener('click',()=>{pendingSettlementFinishId=null;$('settlementFinishModal').hidden=true;});
+$('resetSettlement').addEventListener('click',resetDailySettlement);
+$('retrySettlementSave').addEventListener('click',flushLedgerAdjustments);
+$('confirmSettlementReset').addEventListener('click',confirmResetDailySettlement);
+$('cancelSettlementReset').addEventListener('click',()=>{pendingSettlementResetId=null;$('settlementResetModal').hidden=true;});
+window.addEventListener('pagehide',()=>{persistLedgerAdjustments();flushLedgerAdjustments();});
+window.addEventListener('beforeunload',event=>{if(ledgerAdjustments.length){event.preventDefault();event.returnValue='';}});
 $('drawSharedTeams').addEventListener('click',assignSharedTeams);
 document.querySelector('.shared-winner-options').addEventListener('click',chooseSharedWinner);
 $('saveSharedWinner').addEventListener('click',recordSharedWinner);
@@ -164,5 +274,5 @@ function renderAll(){renderDashboard();renderHistory();renderSharedWinRates();re
 $('matchDate').value=today;renderAll();renderSharedLadder();setBusy(false);window.addEventListener('resize',()=>drawLadderModel('sharedLadderCanvas',getActiveSharedRound()));
 function readMigrationFlag(){try{return localStorage.getItem(migrationKey);}catch{return null;}}
 function writeMigrationFlag(){try{localStorage.setItem(migrationKey,'1');}catch(error){console.warn('Local migration marker unavailable',error);}}
-async function initialise(){if(!db){showToast('동기화 라이브러리를 불러오지 못했습니다. 새로고침해 주세요.');return;}try{let server=await readServer();if(!readMigrationFlag()&&(localSnapshot.matches.length||localSnapshot.nextHyeBinTeam===2)){const migration=await changeServer((base,raw)=>{const ids=new Set(base.matches.map(m=>String(m.id))),missing=localSnapshot.matches.filter(m=>!ids.has(String(m.id))),empty=Object.keys(raw).length===0;return missing.length||empty&&localSnapshot.nextHyeBinTeam===2?{...base,matches:[...base.matches,...missing],nextHyeBinTeam:empty?localSnapshot.nextHyeBinTeam:base.nextHyeBinTeam}:null;});server=migration.state;}applyState(server);writeMigrationFlag();ready=true;setBusy(false);db.channel('scoreboard-state-1').on('postgres_changes',{event:'UPDATE',schema:'public',table:'scoreboard_state'},queueRefresh).subscribe(status=>{if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')queueRefresh();});setInterval(queueRefresh,10000);document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshDefaultMatchDate();queueRefresh();}});}catch(error){console.error('Scoreboard initialisation failed',error);showToast('서버 연결에 실패했습니다. 기록은 이 브라우저에 보관되어 있습니다.');}}
+async function initialise(){if(!db){showToast('동기화 라이브러리를 불러오지 못했습니다. 새로고침해 주세요.');return;}try{let server=await readServer();if(!readMigrationFlag()&&(localSnapshot.matches.length||localSnapshot.nextHyeBinTeam===2)){const migration=await changeServer((base,raw)=>{const ids=new Set(base.matches.map(m=>String(m.id))),missing=localSnapshot.matches.filter(m=>!ids.has(String(m.id))),empty=Object.keys(raw).length===0;return missing.length||empty&&localSnapshot.nextHyeBinTeam===2?{...base,matches:[...base.matches,...missing],nextHyeBinTeam:empty?localSnapshot.nextHyeBinTeam:base.nextHyeBinTeam}:null;});server=migration.state;}applyState(server);writeMigrationFlag();ready=true;setBusy(false);scheduleLedgerSave();db.channel('scoreboard-state-1').on('postgres_changes',{event:'UPDATE',schema:'public',table:'scoreboard_state'},queueRefresh).subscribe(status=>{if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')queueRefresh();});setInterval(queueRefresh,10000);document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshDefaultMatchDate();queueRefresh();if(ledgerAdjustments.length)flushLedgerAdjustments();}});}catch(error){console.error('Scoreboard initialisation failed',error);showToast('서버 연결에 실패했습니다. 기록은 이 브라우저에 보관되어 있습니다.');}}
 initialise();

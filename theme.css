@@ -310,7 +310,7 @@ footer { color: #7d858a; }
 .settlement-round-actions { display: grid; grid-template-columns: 1fr; gap: 7px; margin-top: 10px; }
 .settlement-round-actions .primary-button { padding: 11px 12px; }
 .settlement-undo { min-height: 35px; border: 1px solid #e2e4df; border-radius: 8px; background: transparent; color: #687681; font-size: 11px; }
-.settlement-finish { width: 100%; margin-top: 12px; }
+.settlement-reset { width: 100%; margin-top: 12px; }
 .settlement-totals { margin-top: 19px; padding-top: 15px; border-top: 1px solid #e5e6e1; }
 .settlement-subheading { display: flex; justify-content: space-between; align-items: baseline; }
 .settlement-subheading span { color: var(--muted); font: 10px 'DM Mono', monospace; }
@@ -395,3 +395,7 @@ footer { color: #7d858a; }
 .shared-combination-row .combination-count,
 .shared-combination-row .combination-wins,
 .shared-combination-row .combination-losses { color: #000; }
+
+.settlement-sync { display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:22px; margin-top:8px; color:#64717d; font-size:10px; line-height:1.5; }
+.settlement-sync .save-error { color:#ae5864; }
+.settlement-sync button { flex-shrink:0; border:1px solid #d9e0e6; border-radius:6px; background:#edf2f6; color:#365d85; padding:4px 7px; font-size:10px; cursor:pointer; }
