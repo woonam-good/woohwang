@@ -134,6 +134,12 @@ main { max-width: 1240px; }
 }
 .shared-combination-row { background: #fffefd; }
 .result-form input, .result-form select { border-color: #d8dddf; }
+.result-form label { min-width: 0; }
+.result-form input { min-width: 0; width: 100%; }
+@media (min-width: 761px) and (max-width: 1050px) {
+  form.result-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .result-form label:first-child, .result-form .primary-button { grid-column: span 2; }
+}
 .modal-confirm { background: #365d85; }
 .toast { background: #24384e; }
 footer { color: #7d858a; }
@@ -304,6 +310,7 @@ footer { color: #7d858a; }
 .settlement-round-actions { display: grid; grid-template-columns: 1fr; gap: 7px; margin-top: 10px; }
 .settlement-round-actions .primary-button { padding: 11px 12px; }
 .settlement-undo { min-height: 35px; border: 1px solid #e2e4df; border-radius: 8px; background: transparent; color: #687681; font-size: 11px; }
+.settlement-finish { width: 100%; margin-top: 12px; }
 .settlement-totals { margin-top: 19px; padding-top: 15px; border-top: 1px solid #e5e6e1; }
 .settlement-subheading { display: flex; justify-content: space-between; align-items: baseline; }
 .settlement-subheading span { color: var(--muted); font: 10px 'DM Mono', monospace; }

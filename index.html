@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f2f1ed" />
     <title>돈바람 장부 | 스코어보드</title>
     <link rel="stylesheet" href="styles.css?v=synergy-board-20260920" />
-    <link rel="stylesheet" href="theme.css?v=ledger-layout-20260930" />
+    <link rel="stylesheet" href="theme.css?v=audited-20260930" />
   </head>
   <body>
     <header class="topbar">
@@ -49,7 +49,7 @@
 
       <div class="shared-ladder-workspace">
       <section class="section shared-ladder-section" id="sharedLadder">
-        <div class="section-heading"><div><p class="eyebrow">REALTIME 3 VS 3 LADDER</p><h2>3:3 전용 사다리</h2><p class="section-description">혜빈·민경은 매 판 서로 반대 팀으로 교대하고, 나머지 4명은 무작위로 섞입니다.</p></div></div>
+        <div class="section-heading"><div><p class="eyebrow">REALTIME 3 VS 3 LADDER</p><h2>3:3 전용 사다리</h2><p class="section-description">혜빈·민경은 항상 서로 반대 팀에 무작위 배정하고, 나머지 4명도 무작위로 섞입니다.</p></div></div>
         <p class="shared-live-status" id="sharedLiveStatus">아직 공유된 3:3 팀 배정이 없습니다.</p>
         <div class="ladder-layout shared-ladder-layout">
           <div class="ladder-board" aria-label="실시간 3:3 팀 배정 사다리"><canvas id="sharedLadderCanvas" width="760" height="330"></canvas><div class="ladder-players" id="sharedLadderPlayers"></div><div class="ladder-targets" id="sharedLadderTargets" aria-label="도착 팀"></div></div>
@@ -80,8 +80,10 @@
             <summary>기록한 판 보기 <span id="settlementRoundsCount">0판</span></summary>
             <div class="settlement-round-list" id="settlementRoundList"></div>
           </details>
+          <button class="settlement-undo settlement-finish" id="finishSettlement" type="button">정산 마무리 · 기록만 보관</button>
         </div>
         <div class="settlement-posted" id="settlementPosted" hidden></div>
+        <details class="settlement-rounds-details" id="settlementArchive" hidden><summary>이전 정산 보기</summary><div class="settlement-round-list" id="settlementArchiveList"></div></details>
       </aside>
       <section class="section shared-ladder-details">
         <div class="shared-winrates" aria-label="공유 경기 개인 승률"><div class="section-heading"><div><p class="eyebrow">PLAYER WIN RATE</p><h3>개인별 승률</h3></div></div><div id="sharedWinRates" class="shared-winrate-grid"></div></div>
@@ -117,7 +119,7 @@
     <div class="modal-backdrop" id="resetModal" hidden>
       <section class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="resetModalTitle">
         <p class="eyebrow">RESET DATA</p><h2 id="resetModalTitle">정말로 초기화 하시겠습니까?</h2>
-        <p>모든 사용자가 추가한 경기 기록, 공유 팀 배정 기록, 진행 중인 롤 정산이 삭제되며, 1~8회차 기본 기록은 유지됩니다.</p>
+        <p>모든 사용자가 추가한 경기 기록, 공유 팀 배정 기록, 현재·이전 롤 정산이 삭제되며, 1~8회차 기본 기록은 유지됩니다.</p>
         <div class="modal-actions"><button class="modal-cancel" id="cancelReset" type="button">아니오</button><button class="modal-confirm" id="confirmReset" type="button">예</button></div>
       </section>
     </div>
@@ -128,7 +130,14 @@
         <div class="modal-actions"><button class="modal-cancel" id="cancelSharedDelete" type="button">아니오</button><button class="modal-confirm" id="confirmSharedDelete" type="button">예</button></div>
       </section>
     </div>
+    <div class="modal-backdrop" id="settlementFinishModal" hidden>
+      <section class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="settlementFinishModalTitle">
+        <p class="eyebrow">FINISH SETTLEMENT</p><h2 id="settlementFinishModalTitle">정산을 마무리할까요?</h2>
+        <p>현재 판 금액까지 보관합니다. 스코어보드는 직접 입력해야 하며, 이후 새 정산을 시작해도 이전 정산은 유지됩니다.</p>
+        <div class="modal-actions"><button class="modal-cancel" id="cancelSettlementFinish" type="button">아니오</button><button class="modal-confirm" id="confirmSettlementFinish" type="button">예</button></div>
+      </section>
+    </div>
    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js?v=instant-stake-20260930"></script>
+<script src="app.js?v=audited-20260930"></script>
   </body>
 </html>
