@@ -57,7 +57,7 @@
         </div>
       </section>
       <aside class="section settlement-panel" id="settlementPanel" aria-labelledby="settlementTitle">
-        <div class="section-heading"><div><p class="eyebrow">TODAY'S LOL SETTLEMENT</p><h2 id="settlementTitle">오늘의 롤 정산</h2><p class="section-description">판마다 금액을 기록하고 최종 합계를 스코어보드에 반영해요.</p></div></div>
+        <div class="section-heading"><div><p class="eyebrow">TODAY'S LOL SETTLEMENT</p><h2 id="settlementTitle">오늘의 롤 정산</h2><p class="section-description">판마다 금액을 기록하고 오늘의 누적 금액을 확인하세요. 스코어보드는 개인 결과 기록에서 직접 입력해 주세요.</p></div></div>
         <p class="settlement-date" id="settlementDate">정산을 시작하면 네 명이 함께 기록할 수 있어요.</p>
         <div class="settlement-stake-picker" id="settlementStakePicker" role="group" aria-label="이번 판 금액">
           <button type="button" data-ledger-stake="3000" aria-pressed="true">3,000원</button>
@@ -80,7 +80,6 @@
             <summary>기록한 판 보기 <span id="settlementRoundsCount">0판</span></summary>
             <div class="settlement-round-list" id="settlementRoundList"></div>
           </details>
-          <button class="primary-button settlement-post" id="postSettlement" type="button">최종 합계 스코어보드에 반영</button>
         </div>
         <div class="settlement-posted" id="settlementPosted" hidden></div>
       </aside>
@@ -130,6 +129,6 @@
       </section>
     </div>
    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js?v=settlement-panel-20260929"></script>
+<script src="app.js?v=instant-stake-20260930"></script>
   </body>
 </html>
