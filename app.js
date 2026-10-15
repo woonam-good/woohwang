@@ -29,7 +29,12 @@ function normaliseSettlement(value){
   const adjustmentReceipts=Object.fromEntries(Object.entries(value.adjustmentReceipts||{}).filter(([actor,seq])=>/^[a-f0-9-]{36}$/.test(actor)&&Number.isSafeInteger(seq)&&seq>0));
   return {id:value.id,date:value.date,stake:value.stake===5000?5000:3000,draftId:typeof value.draftId==='string'?value.draftId:(rounds[rounds.length-1]?.id||'initial'),draft:normaliseLedgerAmounts(value.draft),rounds,adjustmentReceipts,closed:Boolean(value.closed),posted:Boolean(value.posted),postedMatchId:typeof value.postedMatchId==='string'?value.postedMatchId:null,totals:normaliseLedgerAmounts(value.totals)};
 }
-function normalise(value){const allSharedRounds=Array.isArray(value?.sharedRounds)?value.sharedRounds.map(normaliseSharedRound).filter(Boolean):[];let activeSharedRoundId=typeof value?.activeSharedRoundId==='string'&&allSharedRounds.some(round=>round.id===value.activeSharedRoundId)?value.activeSharedRoundId:(allSharedRounds[allSharedRounds.length-1]?.id||null);const activeRound=allSharedRounds.find(round=>round.id===activeSharedRoundId),activePendingId=activeRound&&!activeRound.winnerTeam?activeRound.id:null;const sharedRounds=allSharedRounds.filter(round=>round.winnerTeam===1||round.winnerTeam===2||round.id===activePendingId);if(!sharedRounds.some(round=>round.id===activeSharedRoundId))activeSharedRoundId=sharedRounds[sharedRounds.length-1]?.id||null;const nextHyeBinTeam=value?.nextHyeBinTeam===2?2:1,revision=Number.isSafeInteger(value?.revision)&&value.revision>=0?value.revision:0;return {matches:Array.isArray(value?.matches)?value.matches.filter(match=>match&&typeof match==='object').map((match,index)=>({...match,id:match.id??`legacy-${index}`,date:validGameDate(match.date)?match.date:null,changes:normaliseLedgerAmounts(match.changes)})):[],nextHyeBinTeam,nextSharedHyeBinTeam:value?.nextSharedHyeBinTeam===2?2:nextHyeBinTeam,sharedRounds,activeSharedRoundId,settlement:normaliseSettlement(value?.settlement),settlementHistory:Array.isArray(value?.settlementHistory)?value.settlementHistory.map(normaliseSettlement).filter(Boolean):[],revision};}
+function normaliseMatch(match,index){
+  const next={...match,id:match.id??`legacy-${index}`,date:validGameDate(match.date)?match.date:null,changes:normaliseLedgerAmounts(match.changes)};
+  if(Object.prototype.hasOwnProperty.call(match,'settlementRounds'))next.settlementRounds=Array.isArray(match.settlementRounds)?match.settlementRounds.filter(round=>round&&typeof round==='object').map(round=>({...round,stake:round.stake===5000?5000:3000,changes:normaliseLedgerAmounts(round.changes)})):[];
+  return next;
+}
+function normalise(value){const allSharedRounds=Array.isArray(value?.sharedRounds)?value.sharedRounds.map(normaliseSharedRound).filter(Boolean):[];let activeSharedRoundId=typeof value?.activeSharedRoundId==='string'&&allSharedRounds.some(round=>round.id===value.activeSharedRoundId)?value.activeSharedRoundId:(allSharedRounds[allSharedRounds.length-1]?.id||null);const activeRound=allSharedRounds.find(round=>round.id===activeSharedRoundId),activePendingId=activeRound&&!activeRound.winnerTeam?activeRound.id:null;const sharedRounds=allSharedRounds.filter(round=>round.winnerTeam===1||round.winnerTeam===2||round.id===activePendingId);if(!sharedRounds.some(round=>round.id===activeSharedRoundId))activeSharedRoundId=sharedRounds[sharedRounds.length-1]?.id||null;const nextHyeBinTeam=value?.nextHyeBinTeam===2?2:1,revision=Number.isSafeInteger(value?.revision)&&value.revision>=0?value.revision:0;return {matches:Array.isArray(value?.matches)?value.matches.filter(match=>match&&typeof match==='object').map(normaliseMatch):[],nextHyeBinTeam,nextSharedHyeBinTeam:value?.nextSharedHyeBinTeam===2?2:nextHyeBinTeam,sharedRounds,activeSharedRoundId,settlement:normaliseSettlement(value?.settlement),settlementHistory:Array.isArray(value?.settlementHistory)?value.settlementHistory.map(normaliseSettlement).filter(Boolean):[],revision};}
 let localSnapshot;
 try { localSnapshot=normalise(JSON.parse(localStorage.getItem(storageKey)||'{}')); }
 catch { localSnapshot=normalise({}); }
@@ -54,16 +59,36 @@ const ladderRowCount = 9;
 const ladderTop = 43;
 const ladderXs = [70, 194, 318, 442, 566, 690];
 const $ = (id) => document.getElementById(id);
+const dialogReturnFocus=new Map();
+function openDialog(id){
+  const modal=$(id);dialogReturnFocus.set(id,document.activeElement);modal.hidden=false;
+  document.querySelectorAll('body > header, body > main, body > footer').forEach(element=>element.inert=true);
+  modal.querySelector('.modal-cancel')?.focus();
+}
+function closeDialog(id){
+  $(id).hidden=true;
+  document.querySelectorAll('body > header, body > main, body > footer').forEach(element=>element.inert=false);
+  const previous=dialogReturnFocus.get(id);if(previous?.isConnected)previous.focus();dialogReturnFocus.delete(id);
+}
+document.addEventListener('keydown',event=>{
+  const modal=document.querySelector('.modal-backdrop:not([hidden])');if(!modal)return;
+  if(event.key==='Escape'){event.preventDefault();modal.querySelector('.modal-cancel')?.click();return;}
+  if(event.key!=='Tab')return;
+  const buttons=[...modal.querySelectorAll('button:not(:disabled)')];if(!buttons.length)return;
+  const first=buttons[0],last=buttons[buttons.length-1];
+  if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+  else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+});
 function localDateString(date=new Date()){return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;}
 const today = localDateString();
 let suggestedDate = today;
 function refreshDefaultMatchDate(){const current=localDateString(),input=$('matchDate');if(input.value===suggestedDate)input.value=current;suggestedDate=current;}
 function backup(){try{localStorage.setItem(storageKey,JSON.stringify(state));}catch(error){console.warn('Local backup failed',error);}}
 function setBusy(value){working=value;for(const id of ['confirmReset','confirmSharedDelete','confirmSettlementReset','resetData','cancelSharedAssignment']){const control=$(id);if(control)control.disabled=value||!ready;}const draw=$('drawSharedTeams'),active=getActiveSharedRound(),hasPending=Boolean(active&&!active.winnerTeam);if(draw){draw.disabled=value||!ready||hasPending;draw.title=hasPending?'현재 팀 배정의 결과를 저장하거나 취소한 뒤 새로 배정할 수 있습니다.':'';}$('resultForm').querySelector('button[type="submit"]').disabled=value||!ready;document.querySelectorAll('.remove-match,.remove-shared-round,.shared-winner-options button').forEach(button=>button.disabled=value||!ready);const save=$('saveSharedWinner');if(save)save.disabled=value||!ready||!selectedSharedWinner||selectedSharedRoundId!==state.activeSharedRoundId;const ledger=displayedSettlement(),ledgerActive=Boolean(ledger&&!settlementIsClosed(ledger)),ledgerHasDraft=hasLedgerDraft(ledger);document.querySelectorAll('[data-ledger-stake]').forEach(button=>button.disabled=settlementIsClosed(ledger));document.querySelectorAll('[data-ledger-player]').forEach(button=>button.disabled=value||!ready||!ledgerActive);const start=$('startSettlement');if(start)start.disabled=value||!ready||ledgerActive;const saveRound=$('saveSettlementRound');if(saveRound)saveRound.disabled=value||!ready||!ledgerActive||!ledgerHasDraft;const reset=$('resetSettlement');if(reset)reset.disabled=value||!ready||!ledger;const retry=$('retrySettlementSave');if(retry)retry.disabled=value||!ready||Boolean(ledgerFlushPromise);const undoRound=$('undoSettlementRound');if(undoRound)undoRound.disabled=value||!ready||!ledgerActive||!ledger?.rounds.length;}
-function applyState(value,settlementOnly=false){
+function applyState(value){
   const previous=state;state=normalise(value);reconcileLedgerAdjustments();backup();
   const otherData=({settlement,revision,...rest})=>JSON.stringify(rest);
-  if(settlementOnly&&state.settlement&&previous.settlement?.id===state.settlement.id&&!settlementIsClosed(state.settlement)&&otherData(previous)===otherData(state)){
+  if(state.settlement&&previous.settlement?.id===state.settlement.id&&!settlementIsClosed(previous.settlement)&&!settlementIsClosed(state.settlement)&&otherData(previous)===otherData(state)){
     renderSettlementAmounts();renderSettlementRounds(displayedSettlement());
   }else{renderAll();renderSharedLadder();}
   setBusy(working);
@@ -84,7 +109,7 @@ function shuffle(items){const a=[...items];for(let i=a.length-1;i>0;i--){const j
 function totalChange(changes){return scoreboardPlayers.reduce((sum,player)=>sum+Number(changes[player]||0),0);}
 function getPlayerStats(){const stats=Object.fromEntries(ladderPlayers.map(name=>[name,{points:0,wins:0,losses:0}]));[...historicalRounds,...state.matches].forEach(entry=>scoreboardPlayers.forEach(player=>{stats[player].points+=Number(entry.changes?.[player]||0);}));state.sharedRounds.forEach(round=>{if(round.winnerTeam!==1&&round.winnerTeam!==2)return;for(const player of round.team1){if(stats[player])round.winnerTeam===1?stats[player].wins+=1:stats[player].losses+=1;}for(const player of round.team2){if(stats[player])round.winnerTeam===2?stats[player].wins+=1:stats[player].losses+=1;}});return stats;}
 function winRate(stats){const games=stats.wins+stats.losses;return games?Math.round(stats.wins/games*100):0;}
-function winRateTone(stats){const rate=winRate(stats);return rate>50?'above-even':rate===50?'even':'below-even';}
+function winRateTone(stats){if(!stats.wins&&!stats.losses)return 'below-even';return stats.wins>stats.losses?'above-even':stats.wins===stats.losses?'even':'below-even';}
 function renderDashboard(){const stats=getPlayerStats(),ordered=scoreboardPlayers.map(name=>({name,...stats[name]})).sort((a,b)=>b.points-a.points||a.name.localeCompare(b.name,'ko'));$('scoreboard').innerHTML=ordered.map((p,i)=>`<div class="rank-row money-rank"><span class="rank ${i===0||p.points>0?'medal':''}">${String(i+1).padStart(2,'0')}</span><strong class="player-name">${p.name}</strong><span class="score-points"><b>누적</b><em class="${p.points>0?'positive-score':''}">${formatWon(p.points)}</em></span></div>`).join('');$('totalGames').textContent=historicalRounds.length+state.matches.length;const top=ordered[0],bottom=ordered[ordered.length-1];$('topWinner').textContent=`갓${top.name.slice(1)}`;$('topWinnerDetail').textContent=`누적 1위 · ${formatWon(top.points)}`;$('liquidityProvider').textContent=`족${bottom.name.slice(1)}`;$('liquidityProviderDetail').textContent=`누적 4위 · ${formatWon(bottom.points)}`;$('heroCopy').textContent=`${bottom.name.slice(-1)}황의 활약을 응원합니다.`;const recent=state.matches[state.matches.length-1],recentEarner=$('recentEarner'),recentDetail=$('recentEarnerDetail');if(recent){const largest=Math.max(...scoreboardPlayers.map(player=>Number(recent.changes?.[player]||0))),earners=scoreboardPlayers.filter(player=>Number(recent.changes?.[player]||0)===largest);recentEarner.textContent=earners.map(player=>`${player.slice(-1)}황~`).join(', ');recentDetail.textContent=`${formatEarnerDate(recent.date)} + ${formatWon(largest)}`;}else{recentEarner.textContent='-';recentDetail.textContent='입력된 경기 기록이 없어요.';}$('historyCount').textContent=`${historicalRounds.length+state.matches.length} RECORDS`;}
 function emptyLedgerAmounts(){return Object.fromEntries(ledgerPlayers.map(player=>[player,0]));}
 function settlementTotals(settlement,includeDraft=true){const totals=emptyLedgerAmounts();settlement.rounds.forEach(round=>ledgerPlayers.forEach(player=>{totals[player]+=round.changes[player];}));if(includeDraft)ledgerPlayers.forEach(player=>{totals[player]+=settlement.draft[player];});return totals;}
@@ -94,7 +119,8 @@ function hasLedgerDraft(settlement){return Boolean(settlement&&Object.values(set
 function applyLedgerAdjustments(ledger,operations){
   if(!ledger||settlementIsClosed(ledger))return ledger;
   const next={...ledger,draft:{...ledger.draft},rounds:ledger.rounds.map(round=>({...round,changes:{...round.changes}})),adjustmentReceipts:{...ledger.adjustmentReceipts}};
-  for(const op of operations){
+  // A shared local backup can interleave a browser's operations out of order.
+  for(const op of [...operations].sort((a,b)=>a.seq-b.seq)){
     if(op.ledgerId!==next.id||(next.adjustmentReceipts[op.actor]||0)>=op.seq)continue;
     const round=op.draftId===next.draftId?null:next.rounds.find(item=>item.draftId===op.draftId);
     if(op.draftId!==next.draftId&&!round)continue;
@@ -200,7 +226,7 @@ function cancelSharedAssignment(){if(!ready||working)return;const activeId=state
 function renderHistory(){const items=[...historicalRounds.map((entry,index)=>({...entry,id:`seed-${index}`,date:null,seed:true})),...state.matches.map((entry,index)=>({...entry,label:`${historicalRounds.length+index+1}회차${entry.settlementRounds?.length?` · ${entry.settlementRounds.length}판 정산`:''}`}))].reverse(),recent=items.slice(0,5),older=items.slice(5),roundDetails=entry=>entry.settlementRounds?.length?`<details class="settlement-round-breakdown"><summary>판별 내역 ${entry.settlementRounds.length}판</summary><ul>${entry.settlementRounds.map((round,index)=>`<li><b>${index+1}판 · ${Number(round.stake||0).toLocaleString()}원</b><span>${ledgerPlayers.filter(player=>Number(round.changes?.[player]||0)!==0).map(player=>`${player} ${formatChange(Number(round.changes[player]))}`).join(' · ')||'변동 없음'}</span></li>`).join('')}</ul></details>`:'';const row=entry=>`<tr><td>${entry.label} · ${entry.date?formatHistoryDate(entry.date):'날짜 미상'}</td><td class="result-summary">${scoreboardPlayers.map(p=>`<b>${p}</b> ${formatChange(entry.changes[p])}`).join(' · ')}${roundDetails(entry)}</td><td>${entry.seed?'':`<button class="remove-match" aria-label="${entry.label} 기록 삭제" data-id="${escapeHtml(entry.id)}">×</button>`}</td></tr>`;$('historyBody').innerHTML=recent.map(row).join('');$('historyOlderBody').innerHTML=older.map(row).join('');$('olderHistoryCount').textContent=`${older.length}경기`;$('olderHistory').hidden=older.length===0;$('emptyHistory').hidden=items.length>0;setBusy(working);}
 function renderSharedWinRates(){const stats=getPlayerStats();$('sharedWinRates').innerHTML=ladderPlayers.map(player=>{const entry=stats[player],games=entry.wins+entry.losses,rate=winRate(entry),tone=winRateTone(entry);return `<div class="shared-winrate-card"><strong>${player}</strong><b class="${tone}">${rate}%</b><small>${games?`${entry.wins}승 · ${entry.losses}패`:'아직 경기 없음'}</small></div>`;}).join('');}
 function sharedRoundCard(round){const team=(number,members)=>`<span class="team-${number===1?'one':'two'} ${round.winnerTeam===number?'winning-team':''}"><b>${number} TEAM</b><em>${members.join(' · ')}</em>${round.winnerTeam===number?'<i class="win-badge">WIN</i>':''}</span>`;return `<article class="shared-round-record"><div class="shared-round-meta"><strong>${round.date?formatHistoryDate(round.date):'날짜 미상'}</strong><span class="${round.winnerTeam?'shared-round-winner':''}">${round.winnerTeam?`${round.winnerTeam} TEAM 승리`:'승패 입력 대기'}</span><button class="remove-shared-round" type="button" aria-label="3:3 경기 기록 삭제" data-shared-id="${escapeHtml(round.id)}">×</button></div><div class="shared-round-teams">${team(1,round.team1)}${team(2,round.team2)}</div></article>`;}
-function renderSharedHistory(){const rounds=state.sharedRounds.filter(round=>round.winnerTeam===1||round.winnerTeam===2).reverse(),recent=rounds.slice(0,5),older=rounds.slice(5),groups=new Map();older.forEach(round=>{const key=round.date||'unknown';if(!groups.has(key))groups.set(key,[]);groups.get(key).push(round);});$('sharedHistoryCount').textContent=`${rounds.length} ROUNDS`;$('sharedHistoryEmpty').hidden=rounds.length>0;const recentMarkup=recent.length?`<p class="shared-history-caption">최근 5경기</p>${recent.map(sharedRoundCard).join('')}`:'';const olderMarkup=groups.size?`<div class="shared-history-older"><p class="shared-history-caption">날짜별 이전 기록</p>${[...groups.entries()].map(([date,items])=>`<details class="shared-history-day"><summary><strong>${date==='unknown'?'날짜 미상':formatHistoryDate(date)}</strong><span>${items.length}경기 · 펼치기</span></summary><div>${items.map(sharedRoundCard).join('')}</div></details>`).join('')}</div>`:'';$('sharedHistoryBody').innerHTML=recentMarkup+olderMarkup;}
+function renderSharedHistory(){const historyBody=$('sharedHistoryBody'),openDates=new Set([...historyBody.querySelectorAll('details[open][data-history-date]')].map(item=>item.dataset.historyDate));const rounds=state.sharedRounds.filter(round=>round.winnerTeam===1||round.winnerTeam===2).reverse(),recent=rounds.slice(0,5),older=rounds.slice(5),groups=new Map();older.forEach(round=>{const key=round.date||'unknown';if(!groups.has(key))groups.set(key,[]);groups.get(key).push(round);});$('sharedHistoryCount').textContent=`${rounds.length} ROUNDS`;$('sharedHistoryEmpty').hidden=rounds.length>0;const recentMarkup=recent.length?`<p class="shared-history-caption">최근 5경기</p>${recent.map(sharedRoundCard).join('')}`:'';const olderMarkup=groups.size?`<div class="shared-history-older"><p class="shared-history-caption">날짜별 이전 기록</p>${[...groups.entries()].map(([date,items])=>`<details class="shared-history-day" data-history-date="${date}"${openDates.has(date)?' open':''}><summary><strong>${date==='unknown'?'날짜 미상':formatHistoryDate(date)}</strong><span>${items.length}경기 · 펼치기</span></summary><div>${items.map(sharedRoundCard).join('')}</div></details>`).join('')}</div>`:'';$('sharedHistoryBody').innerHTML=recentMarkup+olderMarkup;}
 function renderSharedCombinationCounts(){const counts=new Map();state.sharedRounds.filter(round=>round.winnerTeam===1||round.winnerTeam===2).forEach(round=>[round.team1,round.team2].forEach((members,index)=>{if(members.length!==3)return;const players=[...members].sort((a,b)=>ladderPlayers.indexOf(a)-ladderPlayers.indexOf(b)),key=players.join('|'),team=index+1;const entry=counts.get(key)||{players,count:0,wins:0,losses:0};entry.count+=1;if(round.winnerTeam===team)entry.wins+=1;else entry.losses+=1;counts.set(key,entry);}));const items=[...counts.values()].sort((a,b)=>b.count-a.count||a.players.join('').localeCompare(b.players.join(''),'ko'));$('sharedCombinationCounts').innerHTML=items.length?items.map(item=>`<div class="shared-combination-row"><span>${item.players.join(' · ')}</span><b><i class="combination-count">${item.count}전</i><i class="combination-wins">${item.wins}승</i><i class="combination-losses">${item.losses}패</i><i class="combination-rate ${winRateTone(item)}">승률 ${winRate(item)}%</i></b></div>`).join(''):'<p class="shared-combination-empty">아직 팀 조합 기록이 없어요.</p>';}
 function renderSharedSynergies(){const counts=new Map(),completed=state.sharedRounds.filter(round=>round.winnerTeam===1||round.winnerTeam===2);completed.forEach(round=>[round.team1,round.team2].forEach((members,index)=>{const teammates=members.filter(player=>synergyPlayers.includes(player));for(let first=0;first<teammates.length;first+=1){for(let second=first+1;second<teammates.length;second+=1){const players=[teammates[first],teammates[second]].sort((a,b)=>synergyPlayers.indexOf(a)-synergyPlayers.indexOf(b)),key=players.join('|'),entry=counts.get(key)||{players,wins:0,losses:0};if(round.winnerTeam===index+1)entry.wins+=1;else entry.losses+=1;counts.set(key,entry);}}}));const items=[...counts.values()].sort((a,b)=>(b.wins+b.losses)-(a.wins+a.losses)||b.wins-a.wins||a.players.join('').localeCompare(b.players.join(''),'ko'));$('sharedSynergyCounts').innerHTML=items.length?items.map(item=>`<div class="shared-combination-row"><span>${item.players.join(' · ')}</span><b><i class="combination-count">${item.wins+item.losses}전</i><i class="combination-wins">${item.wins}승</i><i class="combination-losses">${item.losses}패</i><i class="combination-rate ${winRateTone(item)}">승률 ${winRate(item)}%</i></b></div>`).join(''):'<p class="shared-combination-empty">아직 시너지 기록이 없어요.</p>';}
 function showToast(message){const t=$('toast');t.textContent=message;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2300);}
@@ -238,13 +264,13 @@ function undoSettlementRound(){
 }
 function resetDailySettlement(){
   if(!ready||working||!state.settlement)return;
-  pendingSettlementResetId=state.settlement.id;$('settlementResetModal').hidden=false;
+  pendingSettlementResetId=state.settlement.id;openDialog('settlementResetModal');
 }
 async function confirmResetDailySettlement(){
   if(!ready||working||!pendingSettlementResetId)return;
   const ledgerId=pendingSettlementResetId,settlement=createDailySettlement();
   const changed=await enqueue(base=>base.settlement?.id!==ledgerId?null:{...base,settlement,settlementHistory:[]},'정산 기록을 초기화했어요.');
-  if(changed||state.settlement?.id!==ledgerId){$('settlementResetModal').hidden=true;pendingSettlementResetId=null;}
+  if(changed||state.settlement?.id!==ledgerId){closeDialog('settlementResetModal');pendingSettlementResetId=null;}
 }
 $('settlementPanel').addEventListener('click',event=>{const stakeButton=event.target.closest('[data-ledger-stake]');if(stakeButton){selectSettlementStake(Number(stakeButton.dataset.ledgerStake));return;}const playerButton=event.target.closest('[data-ledger-player]');if(playerButton){adjustSettlementAmount(playerButton.dataset.ledgerPlayer,Number(playerButton.dataset.ledgerDirection));}});
 $('startSettlement').addEventListener('click',startDailySettlement);
@@ -253,25 +279,67 @@ $('undoSettlementRound').addEventListener('click',undoSettlementRound);
 $('resetSettlement').addEventListener('click',resetDailySettlement);
 $('retrySettlementSave').addEventListener('click',flushLedgerAdjustments);
 $('confirmSettlementReset').addEventListener('click',confirmResetDailySettlement);
-$('cancelSettlementReset').addEventListener('click',()=>{pendingSettlementResetId=null;$('settlementResetModal').hidden=true;});
+$('cancelSettlementReset').addEventListener('click',()=>{pendingSettlementResetId=null;closeDialog('settlementResetModal');});
 window.addEventListener('pagehide',()=>{persistLedgerAdjustments();flushLedgerAdjustments();});
 window.addEventListener('beforeunload',event=>{if(ledgerAdjustments.length){event.preventDefault();event.returnValue='';}});
 $('drawSharedTeams').addEventListener('click',assignSharedTeams);
 document.querySelector('.shared-winner-options').addEventListener('click',chooseSharedWinner);
 $('saveSharedWinner').addEventListener('click',recordSharedWinner);
 $('cancelSharedAssignment').addEventListener('click',cancelSharedAssignment);
-$('resultForm').addEventListener('submit',async event=>{event.preventDefault();if(!ready||working)return;const changes={};for(const [name,id] of [['성구','amountSeonggu'],['남우','amountNamu'],['태원','amountTaewon'],['민진','amountMinjin']]){const input=$(id),raw=input.value.trim(),amount=Number(raw);if(!/^-?[0-9]+$/.test(raw)||!Number.isSafeInteger(amount)){showToast('금액은 -3000처럼 정수로 입력해 주세요.');input.focus();return;}changes[name]=amount;}const date=$('matchDate').value;if(!validGameDate(date)){showToast('경기 날짜를 확인해 주세요.');return;}const match={id:crypto.randomUUID(),date,changes};if(await enqueue(base=>({...base,matches:[...base.matches,match]}),'개인 금액 기록이 저장됐어요.')){$('resultForm').reset();suggestedDate=localDateString();$('matchDate').value=suggestedDate;}});
+// Keep an unconfirmed submission in this tab across reloads. Retrying it uses
+// the same ID, even if the server committed the first request but its reply was lost.
+const resultSubmissionKey=`${storageKey}-result-submission-v1`;
+const resultFields=[['성구','amountSeonggu'],['남우','amountNamu'],['태원','amountTaewon'],['민진','amountMinjin']];
+const resultValues=()=>JSON.stringify([$('matchDate').value,...resultFields.map(([,id])=>$(id).value.trim())]);
+const resultFormNote=$('formNote').textContent;
+let resultSubmission=null;
+try{
+  const saved=JSON.parse(sessionStorage.getItem(resultSubmissionKey)||'null'),match=saved?.match;
+  if(match&&typeof match.id==='string'&&validGameDate(match.date)&&resultFields.every(([name])=>Number.isSafeInteger(match.changes?.[name]))){
+    resultSubmission={match,values:saved.values};
+  }
+}catch(error){console.warn('Result retry backup unavailable',error);}
+function persistResultSubmission(){try{sessionStorage.setItem(resultSubmissionKey,JSON.stringify(resultSubmission));}catch(error){console.warn('Result retry backup unavailable',error);}}
+function restoreResultSubmission(){
+  if(!resultSubmission)return;
+  $('matchDate').value=resultSubmission.match.date;
+  suggestedDate=null; // A restored unconfirmed date must not roll over at midnight.
+  for(const [name,id] of resultFields)$(id).value=String(resultSubmission.match.changes[name]);
+  resultSubmission.values=resultValues();
+  $('formNote').textContent='이전 저장 요청의 입력을 복구했어요. 결과 저장을 누르면 중복 없이 저장 여부를 확인합니다.';
+}
+$('resultForm').addEventListener('submit',async event=>{
+  event.preventDefault();if(!ready||working)return;
+  const changes={};
+  for(const [name,id] of resultFields){
+    const input=$(id),raw=input.value.trim(),amount=Number(raw);
+    if(!/^-?[0-9]+$/.test(raw)||!Number.isSafeInteger(amount)){showToast('금액은 -3000처럼 정수로 입력해 주세요.');input.focus();return;}
+    changes[name]=amount;
+  }
+  const date=$('matchDate').value;
+  if(!validGameDate(date)){showToast('경기 날짜를 확인해 주세요.');return;}
+  const values=resultValues();
+  if(!resultSubmission||resultSubmission.values!==values)resultSubmission={match:{id:crypto.randomUUID(),date,changes},values};
+  persistResultSubmission();
+  const submission=resultSubmission,match=submission.match;
+  const changed=await enqueue(base=>base.matches.some(item=>item.id===match.id)?null:{...base,matches:[...base.matches,match]},'개인 금액 기록이 저장됐어요.');
+  if(state.matches.some(item=>item.id===match.id)){
+    if(!changed)showToast('이미 저장된 경기 기록을 확인했어요. 중복으로 추가하지 않았습니다.');
+    if(resultValues()===submission.values){$('resultForm').reset();suggestedDate=localDateString();$('matchDate').value=suggestedDate;}
+    resultSubmission=null;persistResultSubmission();$('formNote').textContent=resultFormNote;
+  }
+});
 function removeMatch(event){const button=event.target.closest('[data-id]');if(!button||!ready||working)return;if(!confirm('정말로 삭제하시겠습니까?'))return;const id=button.dataset.id;enqueue(base=>({...base,matches:base.matches.filter(m=>String(m.id)!==id),settlement:base.settlement?.postedMatchId===id?null:base.settlement}),'기록을 삭제했어요.');}
 $('historyBody').addEventListener('click',removeMatch);
 $('historyOlderBody').addEventListener('click',removeMatch);
-$('sharedHistoryBody').addEventListener('click',event=>{const button=event.target.closest('[data-shared-id]');if(!button||!ready||working)return;pendingSharedDeleteId=button.dataset.sharedId;$('sharedDeleteModal').hidden=false;});
-$('cancelSharedDelete').addEventListener('click',()=>{pendingSharedDeleteId=null;$('sharedDeleteModal').hidden=true;});
-$('confirmSharedDelete').addEventListener('click',async()=>{const id=pendingSharedDeleteId;if(!id||!ready||working)return;if(!state.sharedRounds.some(round=>round.id===id)){$('sharedDeleteModal').hidden=true;pendingSharedDeleteId=null;return;}if(await enqueue(base=>{if(!base.sharedRounds.some(round=>round.id===id))return null;const sharedRounds=base.sharedRounds.filter(round=>round.id!==id);return {...base,sharedRounds,activeSharedRoundId:base.activeSharedRoundId===id?(sharedRounds[sharedRounds.length-1]?.id||null):base.activeSharedRoundId};},'3:3 경기 기록을 삭제했어요.')){$('sharedDeleteModal').hidden=true;pendingSharedDeleteId=null;}});
-$('resetData').addEventListener('click',()=>{$('resetModal').hidden=false;});
-$('cancelReset').addEventListener('click',()=>{$('resetModal').hidden=true;});
-$('confirmReset').addEventListener('click',async()=>{if(!ready||working)return;if(await enqueue(()=>({matches:[],nextHyeBinTeam:1,nextSharedHyeBinTeam:1,sharedRounds:[],activeSharedRoundId:null}),'추가 기록을 초기화했어요.')){renderSharedLadder();$('resetModal').hidden=true;}});
+$('sharedHistoryBody').addEventListener('click',event=>{const button=event.target.closest('[data-shared-id]');if(!button||!ready||working)return;pendingSharedDeleteId=button.dataset.sharedId;openDialog('sharedDeleteModal');});
+$('cancelSharedDelete').addEventListener('click',()=>{pendingSharedDeleteId=null;closeDialog('sharedDeleteModal');});
+$('confirmSharedDelete').addEventListener('click',async()=>{const id=pendingSharedDeleteId;if(!id||!ready||working)return;if(!state.sharedRounds.some(round=>round.id===id)){closeDialog('sharedDeleteModal');pendingSharedDeleteId=null;return;}await enqueue(base=>{if(!base.sharedRounds.some(round=>round.id===id))return null;const sharedRounds=base.sharedRounds.filter(round=>round.id!==id);return {...base,sharedRounds,activeSharedRoundId:base.activeSharedRoundId===id?(sharedRounds[sharedRounds.length-1]?.id||null):base.activeSharedRoundId};},'3:3 경기 기록을 삭제했어요.');if(!state.sharedRounds.some(round=>round.id===id)){closeDialog('sharedDeleteModal');pendingSharedDeleteId=null;}});
+$('resetData').addEventListener('click',()=>{openDialog('resetModal');});
+$('cancelReset').addEventListener('click',()=>{closeDialog('resetModal');});
+$('confirmReset').addEventListener('click',async()=>{if(!ready||working)return;if(await enqueue(()=>({matches:[],nextHyeBinTeam:1,nextSharedHyeBinTeam:1,sharedRounds:[],activeSharedRoundId:null}),'추가 기록을 초기화했어요.')){renderSharedLadder();closeDialog('resetModal');}});
 function renderAll(){renderDashboard();renderHistory();renderSharedWinRates();renderSharedHistory();renderSharedCombinationCounts();renderSharedSynergies();renderSettlement();}
-$('matchDate').value=today;renderAll();renderSharedLadder();setBusy(false);window.addEventListener('resize',()=>drawLadderModel('sharedLadderCanvas',getActiveSharedRound()));
+$('matchDate').value=today;restoreResultSubmission();renderAll();renderSharedLadder();setBusy(false);window.addEventListener('resize',()=>drawLadderModel('sharedLadderCanvas',getActiveSharedRound()));
 function readMigrationFlag(){try{return localStorage.getItem(migrationKey);}catch{return null;}}
 function writeMigrationFlag(){try{localStorage.setItem(migrationKey,'1');}catch(error){console.warn('Local migration marker unavailable',error);}}
 async function initialise(){if(!db){showToast('동기화 라이브러리를 불러오지 못했습니다. 새로고침해 주세요.');return;}try{let server=await readServer();if(!readMigrationFlag()&&(localSnapshot.matches.length||localSnapshot.nextHyeBinTeam===2)){const migration=await changeServer((base,raw)=>{const ids=new Set(base.matches.map(m=>String(m.id))),missing=localSnapshot.matches.filter(m=>!ids.has(String(m.id))),empty=Object.keys(raw).length===0;return missing.length||empty&&localSnapshot.nextHyeBinTeam===2?{...base,matches:[...base.matches,...missing],nextHyeBinTeam:empty?localSnapshot.nextHyeBinTeam:base.nextHyeBinTeam}:null;});server=migration.state;}applyState(server);writeMigrationFlag();ready=true;setBusy(false);scheduleLedgerSave();db.channel('scoreboard-state-1').on('postgres_changes',{event:'UPDATE',schema:'public',table:'scoreboard_state'},queueRefresh).subscribe(status=>{if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')queueRefresh();});setInterval(queueRefresh,10000);document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshDefaultMatchDate();queueRefresh();if(ledgerAdjustments.length)flushLedgerAdjustments();}});}catch(error){console.error('Scoreboard initialisation failed',error);showToast('서버 연결에 실패했습니다. 기록은 이 브라우저에 보관되어 있습니다.');}}
